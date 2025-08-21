@@ -135,7 +135,7 @@ script.on_event("perel-build", function (event)
       }
       trigger.destroy()
       
-      storage.circuit_network_last_added[event.player_index] = {
+      storage.circuit_network_last_added[event.player_index] = events[1] == "on_circuit_wire_added" and {
         entity = wire_destination,
         connector_id = defines.wire_connector_id[(
           destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
@@ -149,7 +149,7 @@ script.on_event("perel-build", function (event)
             )
           ) or "circuit_"
         ) .. player.cursor_stack.name:sub(1,-6)]
-      }
+      } or nil
     end
   end
 end)
