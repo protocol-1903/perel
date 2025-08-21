@@ -134,6 +134,22 @@ script.on_event("perel-build", function (event)
         event_data = event_data
       }
       trigger.destroy()
+      
+      storage.circuit_network_last_added[event.player_index] = {
+        entity = wire_destination,
+        connector_id = defines.wire_connector_id[(
+          destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
+            "combinator_" .. (
+              ( -- check that we are selecting the input side of the combinator
+                destination_dir == 00 and cursor_pos.y > destination_pos.y or
+                destination_dir == 04 and cursor_pos.x < destination_pos.x or
+                destination_dir == 08 and cursor_pos.y < destination_pos.y or
+                destination_dir == 12 and cursor_pos.x > destination_pos.x
+              ) and "input_" or "output_"
+            )
+          ) or "circuit_"
+        ) .. player.cursor_stack.name:sub(1,-6)]
+      }
     end
   end
 end)
