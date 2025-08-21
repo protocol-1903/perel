@@ -182,16 +182,3 @@ script.on_event(defines.events.on_object_destroyed, function (event)
       end
   end
 end)
-
-for _, eventy in pairs{
-  "on_circuit_wire_added",
-  "on_circuit_wire_removed",
-  "on_circuit_network_created",
-  "on_circuit_network_destroyed",
-  "on_circuit_network_merged",
-  "on_circuit_network_split",
-} do
-  script.on_event(defines.events[eventy], function (event)
-    game.print(eventy, {skip = defines.print_skip.never})
-  end)
-end

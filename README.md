@@ -1,11 +1,17 @@
-[![ko-fi](https://img.shields.io/badge/Ko--fi-Donate%20-hotpink?logo=kofi&logoColor=white&style=for-the-badge)](https://ko-fi.com/protocol1903) [![](https://img.shields.io/badge/dynamic/json?color=orange&label=Factorio&query=downloads_count&suffix=%20downloads&url=https%3A%2F%2Fmods.factorio.com%2Fapi%2Fmods%2Fno-pipe-touching&style=for-the-badge)](https://mods.factorio.com/mod/default-settings) [![](https://img.shields.io/badge/Discord-Community-blue?style=for-the-badge)](https://discord.gg/K3fXMGVc4z) [![](https://img.shields.io/badge/Github-Source-green?style=for-the-badge)](https://github.com/protocol-1903/default-settings)
+[![ko-fi](https://img.shields.io/badge/Ko--fi-Donate%20-hotpink?logo=kofi&logoColor=white&style=for-the-badge)](https://ko-fi.com/protocol1903) [![](https://img.shields.io/badge/dynamic/json?color=orange&label=Factorio&query=downloads_count&suffix=%20downloads&url=https%3A%2F%2Fmods.factorio.com%2Fapi%2Fmods%2Fperel&style=for-the-badge)](https://mods.factorio.com/mod/perel) [![](https://img.shields.io/badge/Discord-Community-blue?style=for-the-badge)](https://discord.gg/K3fXMGVc4z) [![](https://img.shields.io/badge/Github-Source-green?style=for-the-badge)](https://github.com/protocol-1903/perel)
 
-# This mod alters existing pipes. You will need another mod to add new pipes.
+# Just another library mod with some custom runtime events
 
-## What?
-NPT allows pipes to only connect to pipes of the same material, including underground pipes! Pipe weaving is now possible!
-Please report any bugs here or on [github](https://github.com/protocol-1903/default-settings)
+Events:
+- `on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`:
+    - player_index `uint`: The index of the player that caused the event.
+    - tick `uint`: Tick the event was generated.
+    - source `LuaEntity`: The source entity of the wire connection.
+    - source_connector_id `defines.wire_connector_id`: The source connector of the wire connection.
+    - destination `LuaEntity`: The destination entity of the wire connection.
+    - destination_connector_id `defines.wire_connector_id`: The destination connector of the wire connection.
+    - wire_type `defines.wire_type`: The wire type of the connection.
 
-
+NOTE: Circuit network events currently only support player interaction. Script/bot interaction is planned for the future.
 
 If you have a mod idea, let me know and I can look into it.
