@@ -1,0 +1,10 @@
+{
+  "name": "perel",
+  "version": "1.0.0",
+  "title": "Protocol's Extended Runtime Event Library",
+  "description": "",
+  "author": "protocol_1903",
+  "homepage": "https://discord.gg/K3fXMGVc4z",
+  "factorio_version": "2.0",
+  "dependencies": ["base"]
+}
