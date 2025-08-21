@@ -2,15 +2,14 @@
 
 # Just another library mod with some custom runtime events
 
-Events:
-- `on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`:
-    - player_index `uint`: The index of the player that caused the event.
-    - tick `uint`: Tick the event was generated.
-    - source `LuaEntity`: The source entity of the wire connection.
-    - source_connector_id `defines.wire_connector_id`: The source connector of the wire connection.
-    - destination `LuaEntity`: The destination entity of the wire connection.
-    - destination_connector_id `defines.wire_connector_id`: The destination connector of the wire connection.
-    - wire_type `defines.wire_type`: The wire type of the connection.
+`on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`:
+    - `uint` player_index: The index of the player that caused the event.
+    - `uint` tick: Tick the event was generated.
+    - `LuaEntity` source: The source entity of the wire connection.
+    - `defines.wire_connector_id` source_connector_id: The source connector of the wire connection.
+    - `LuaEntity` destination: The destination entity of the wire connection.
+    - `defines.wire_connector_id` destination_connector_id: The destination connector of the wire connection.
+    - `defines.wire_type` wire_type: The wire type of the connection.
 
 NOTE: Circuit network events currently only support player interaction. Script/bot interaction is planned for the future.
 
