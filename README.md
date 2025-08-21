@@ -2,6 +2,8 @@
 
 # Just another library mod with some custom runtime events
 
+Includes intellisense integration if the mod file is unzipped in the working directory
+
 `on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`:
     - `uint` player_index: The index of the player that caused the event.
     - `uint` tick: Tick the event was generated.
