@@ -171,7 +171,7 @@ script.on_event(defines.events.on_object_destroyed, function (event)
       if events[1] == "on_circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
         -- circuit network is being split
         events[#events+1] = "on_circuit_network_split"
-      elseif events[1] == "on_circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type == "entity-ghost" and event_data.destination.type == "entity-ghost" then
+      elseif events[1] == "on_circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
         -- wire is connecting two disconnected networks
         events[#events+1] = "on_circuit_network_destroyed"
       end
