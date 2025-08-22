@@ -69,9 +69,6 @@ script.on_event("perel-build", function (event)
     
     local wire_source = wire_source_data.entity
 
-    log(wire_destination)
-    log(wire_source)
-
     -- if last entity added to wire can reach (and not same entity), then run network creation logic
     if wire_destination.unit_number ~= wire_source.unit_number and wire_destination.can_wires_reach(wire_source) then
 
@@ -127,6 +124,12 @@ script.on_event("perel-build", function (event)
         events[#events+1] = "on_circuit_network_merged"
       end
 
+      -- prefire events
+      for i = 1, #events do
+        event_data.name = "on_pre_" .. events[i]:sub(4)
+        script.raise_event(defines.events[event_data.name], event_data)
+      end
+
       -- this logic triggers a delayed subtick event so that the circuit network events are triggered after the wire is added
       local trigger = game.surfaces[1].create_entity{name = "perel-trigger-entity", position = {0,0}}
       storage.deathrattles[script.register_on_object_destroyed(trigger)] = {
@@ -178,7 +181,7 @@ script.on_event(defines.events.on_object_destroyed, function (event)
 
       for i = 1, #events do
         event_data.name = events[i]
-        script.raise_event(defines.events[events[i]], event_data)
+        script.raise_event(defines.events[event_data.name], event_data)
       end
   end
 end)
