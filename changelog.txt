@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: ????
+  Bugfixes:
+    - Fixed event.name being a string of the event name instead of the integer registration identifier
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2025-08-21
   Changes:
