@@ -110,18 +110,18 @@ script.on_event("perel-build", function (event)
       -- check if a wire is being added or removed
       if wire_source.get_wire_connector(event_data.source_connector_id, true).is_connected_to(wire_destination.get_wire_connector(event_data.destination_connector_id, true)) then
         -- wire is being removed
-        events = {"on_circuit_wire_removed"}
+        events = {"circuit_wire_removed"}
       else
         -- wire is being added
-        events = {"on_circuit_wire_added"}
+        events = {"circuit_wire_added"}
       end
 
-      if events[1] == "on_circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+      if events[1] == "circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
         -- wire is being added between two nonexistant networks
-        events[#events+1] = "on_circuit_network_created"
-      elseif events[1] == "on_circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+        events[#events+1] = "circuit_network_created"
+      elseif events[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
         -- wire is connecting two disconnected networks
-        events[#events+1] = "on_circuit_network_merged"
+        events[#events+1] = "circuit_network_merged"
       end
 
       -- prefire events
@@ -138,7 +138,7 @@ script.on_event("perel-build", function (event)
       }
       trigger.destroy()
       
-      storage.circuit_network_last_added[event.player_index] = events[1] == "on_circuit_wire_added" and {
+      storage.circuit_network_last_added[event.player_index] = events[1] == "circuit_wire_added" and {
         entity = wire_destination,
         connector_id = defines.wire_connector_id[(
           destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
@@ -171,17 +171,17 @@ script.on_event(defines.events.on_object_destroyed, function (event)
       local source_connector = event_data.source.get_wire_connector(event_data.source_connector_id, true)
       local destination_connector = event_data.destination.get_wire_connector(event_data.destination_connector_id, true)
 
-      if events[1] == "on_circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+      if events[1] == "circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
         -- circuit network is being split
-        events[#events+1] = "on_circuit_network_split"
-      elseif events[1] == "on_circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
+        events[#events+1] = "circuit_network_split"
+      elseif events[1] == "circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
         -- wire is connecting two disconnected networks
-        events[#events+1] = "on_circuit_network_destroyed"
+        events[#events+1] = "circuit_network_destroyed"
       end
 
       for i = 1, #events do
-        event_data.name = defines.events[events[i]]
-        script.raise_event(defines.events[events[i]], event_data)
+        event_data.name = defines.events["on_" .. events[i]]
+        script.raise_event(defines.events["on_" .. events[i]], event_data)
       end
   end
 end)
