@@ -109,7 +109,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when a circuit wire is added between two entities.\
----Fired regardless of if either entity is a ghost.
+---Fired regardless of if either entity is a ghost.\
+---Also fired when ghosts are built and their wires are created.
 ---@class (exact) EventData.on_circuit_wire_added : EventData
 ---The index of the player that added the wire connection.
 ---@field player_index uint
@@ -145,7 +146,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when a circuit wire is removed between two entities.\
----Fired regardless of if either entity is a ghost.
+---Fired regardless of if either entity is a ghost.\
+---Also fired when ghosts are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_wire_removed : EventData
 ---The index of the player that removed the wire connection.
 ---@field player_index uint
@@ -181,7 +183,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when a circuit network is created between two entities.\
----Fired only when both entities are not ghosts.
+---Fired only when both entities are not ghosts.\
+---Also fired when ghosts are built and their wires are created.
 ---@class (exact) EventData.on_circuit_network_created : EventData
 ---The index of the player that created the network.
 ---@field player_index uint
@@ -217,7 +220,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when a circuit network is destroyed.\
----Fired only when both entities are not ghosts.
+---Fired only when both entities are not ghosts.\
+---Also fired when ghosts are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_network_destroyed : EventData
 ---The index of the player that destroyed the network.
 ---@field player_index uint
