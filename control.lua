@@ -180,8 +180,8 @@ script.on_event(defines.events.on_object_destroyed, function (event)
       end
 
       for i = 1, #events do
-        event_data.name = events[i]
-        script.raise_event(defines.events[event_data.name], event_data)
+        event_data.name = defines.events[events[i]]
+        script.raise_event(defines.events[events[i]], event_data)
       end
   end
 end)
