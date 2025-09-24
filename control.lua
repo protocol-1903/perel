@@ -8,7 +8,7 @@ end)
 script.on_configuration_changed(function (event)
   storage = {
     circuit_network_last_added = storage.circuit_network_last_added or {},
-    deathrattles = storage.deathrattles or {}
+    deathrattles = {}
   }
 end)
 
@@ -240,20 +240,41 @@ script.on_event(defines.events.on_object_destroyed, function (event)
 
   if events and event_data then
 
-      local source_connector = event_data.source.get_wire_connector(event_data.source_connector_id, true)
-      local destination_connector = event_data.destination.get_wire_connector(event_data.destination_connector_id, true)
+    local source_connector = event_data.source.get_wire_connector(event_data.source_connector_id, true)
+    local destination_connector = event_data.destination.get_wire_connector(event_data.destination_connector_id, true)
 
-      if events[1] == "circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
-        -- circuit network is being split
-        events[#events+1] = "circuit_network_split"
-      elseif events[1] == "circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
-        -- wire is connecting two disconnected networks
-        events[#events+1] = "circuit_network_destroyed"
-      end
+    if events[1] == "circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+      -- circuit network is being split
+      events[#events+1] = "circuit_network_split"
+    elseif events[1] == "circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
+      -- wire is connecting two disconnected networks
+      events[#events+1] = "circuit_network_destroyed"
+    end
 
-      for i = 1, #events do
-        event_data.name = defines.events["on_" .. events[i]]
-        script.raise_event(event_data.name, event_data)
-      end
+    for i = 1, #events do
+      event_data.name = defines.events["on_" .. events[i]]
+      script.raise_event(event_data.name, event_data)
+    end
   end
+
+  -- clear data on exit
+  storage.deathrattles[event.registration_number] = nil
 end)
+
+-- testing functionality
+--[[
+
+script.on_event(defines.events.on_pre_circuit_wire_added, function() game.print("on_pre_circuit_wire_added", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_wire_added, function() game.print("on_circuit_wire_added", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_pre_circuit_wire_removed, function() game.print("on_pre_circuit_wire_removed", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_wire_removed, function() game.print("on_circuit_wire_removed", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_pre_circuit_network_created, function() game.print("on_pre_circuit_network_created", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_network_created, function() game.print("on_circuit_network_created", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_pre_circuit_network_destroyed, function() game.print("on_pre_circuit_network_destroyed", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_network_destroyed, function() game.print("on_circuit_network_destroyed", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_pre_circuit_network_merged, function() game.print("on_pre_circuit_network_merged", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_network_merged, function() game.print("on_circuit_network_merged", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_pre_circuit_network_split, function() game.print("on_pre_circuit_network_split", {skip = defines.skip.never}) end)
+script.on_event(defines.events.on_circuit_network_split, function() game.print("on_circuit_network_split", {skip = defines.skip.never}) end)
+
+--]]
