@@ -126,8 +126,8 @@ script.on_event("perel-build", function (event)
 
       -- prefire events
       for i = 1, #events do
-        event_data.name = "on_pre_" .. events[i]:sub(4)
-        script.raise_event(defines.events[event_data.name], event_data)
+        event_data.name = defines.events["on_pre_" .. events[i]]
+        script.raise_event(defines.events["on_pre_" .. events[i]], event_data)
       end
 
       -- this logic triggers a delayed subtick event so that the circuit network events are triggered after the wire is added
