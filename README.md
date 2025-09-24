@@ -12,7 +12,7 @@ Includes intellisense integration if the mod file is unzipped in the working dir
     - `LuaEntity` destination: The destination entity of the wire connection.
     - `defines.wire_connector_id` destination_connector_id: The destination connector of the wire connection.
     - `defines.wire_type` wire_type: The wire type of the connection.
-
+(`pre_` circuit events are also supported)
 NOTE: Circuit network events currently only support player interaction. Script/bot interaction is planned for the future.
 
 If you have a mod idea, let me know and I can look into it.
