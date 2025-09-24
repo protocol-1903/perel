@@ -257,7 +257,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when two circuit networks are merged.\
----Fired only when both entities are not ghosts.
+---Fired only when both entities are not ghosts.\
+---Also fired when ghosts are built and their wires are created.
 ---@class (exact) EventData.on_circuit_network_merged : EventData
 ---The index of the player that merged the networks.
 ---@field player_index uint
@@ -293,7 +294,8 @@ defines.events = {
 ---@field wire_type defines.wire_type
 
 ---Called when a circuit network is split.\
----Fired only when both entities are not ghosts.
+---Fired only when both entities are not ghosts.\
+---Also fired when ghosts are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_network_split : EventData
 ---The index of the player that split the network.
 ---@field player_index uint
