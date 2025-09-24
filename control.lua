@@ -37,7 +37,7 @@ script.on_event("perel-build", function (event)
   local destination_prototype = wire_destination.name == "entity-ghost" and wire_destination.ghost_prototype or wire_destination.prototype
   
   -- ensure the entity (if exist) supports the circuit network
-  if destination_prototype.get_max_circuit_wire_distance(wire_destination.quality) ~= 0 then
+  if destination_prototype.get_max_circuit_wire_distance() ~= 0 then
     
     local wire_source_data = storage.circuit_network_last_added[event.player_index]
     
