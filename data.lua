@@ -147,7 +147,7 @@ defines.events = {
 
 ---Called when a circuit wire is removed between two entities.\
 ---Fired regardless of if either entity is a ghost.\
----Also fired when ghosts are destroyed and their wires are removed.
+---Also fired when entities (not ghosts) are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_wire_removed : EventData
 ---The index of the player that removed the wire connection.
 ---@field player_index uint
@@ -221,7 +221,7 @@ defines.events = {
 
 ---Called when a circuit network is destroyed.\
 ---Fired only when both entities are not ghosts.\
----Also fired when ghosts are destroyed and their wires are removed.
+---Also fired when entities are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_network_destroyed : EventData
 ---The index of the player that destroyed the network.
 ---@field player_index uint
@@ -295,7 +295,7 @@ defines.events = {
 
 ---Called when a circuit network is split.\
 ---Fired only when both entities are not ghosts.\
----Also fired when ghosts are destroyed and their wires are removed.
+---Also fired when entities are destroyed and their wires are removed.
 ---@class (exact) EventData.on_circuit_network_split : EventData
 ---The index of the player that split the network.
 ---@field player_index uint
