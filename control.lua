@@ -124,11 +124,17 @@ script.on_event({
             wire_type = wire_connection.wire_type,
           }
 
-          -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-          for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-            -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
-            if existing_connections ~= 2 and sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-              existing_connections = existing_connections + 1
+          -- checking may not be required
+          if existing_connections ~= 2 then
+            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+              if existing_connections == 1 then
+                existing_connections = 2
+                -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
+              elseif existing_connections == 0 and sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+                existing_connections = 1
+                break
+              end
             end
           end
         end
