@@ -84,6 +84,61 @@ script.on_event({
   end
 end)
 
+script.on_event({
+  defines.events.on_player_mined_entity,
+  defines.events.on_robot_mined_entity,
+  defines.events.on_space_platform_mined_entity,
+  defines.events.script_raised_destroy,
+  defines.events.on_entity_died
+}, function (event)
+  local source_entity = event.entity
+  -- ignore ghosts and make sure it supports circuit wires
+  if source_entity.type ~= "entity-ghost" and source_entity.prototype.get_max_circuit_wire_distance() ~= 0 then
+    -- for each wire node option
+    for _, wire_connector_id in pairs(nodes(source_entity.type)) do
+      local events = {}
+      local existing_connections = 0
+      -- for each connection
+      for i, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
+        -- ignore radar and script connections
+        if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+          -- generate event data
+          events[#events+1] = {
+            player_index = event.player_index or nil,
+            tick = game.tick,
+            source = source_entity,
+            source_connector_id = wire_connector_id,
+            destination = wire_connection.target.owner,
+            destination_connector_id = wire_connection.wire_connector_id,
+            wire_type = wire_connection.wire_type,
+          }
+
+          -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+          for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+            -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
+            if existing_connections ~= 2 and sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+              existing_connections = existing_connections + 1
+            end
+          end
+        end
+      end
+
+      -- raise events
+      for _, event_name in pairs({
+        "circuit_wire_removed",
+        -- check how many existing connections were found to determine if merged or created should be used
+        existing_connections == 0 and "circuit_network_destroyed" or nil, -- no other networks detected, destroying network
+        existing_connections == 2 and "circuit_network_split" or nil -- 2+ networks detected, splitting networks
+      }) do
+        for _, event_data in pairs(events) do
+          event_data.name = defines.events["on_" .. event_name]
+          script.raise_event(event_data.name, event_data)
+        end
+      end
+    end
+  end
+end)
+
 script.on_event(defines.events.on_player_cursor_stack_changed, function (event)
   local player = game.get_player(event.player_index)
   local item = player.cursor_stack
