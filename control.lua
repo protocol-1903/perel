@@ -1,16 +1,27 @@
+assert(prototypes.item.coin, "ERROR: item 'coin' not found!")
+
 script.on_init(function (event)
   storage = {
     circuit_network_last_added = {},
-    deathrattles = {}
+    deathrattles = {},
+    grandfather = game.create_inventory(1)
   }
 end)
 
 script.on_configuration_changed(function (event)
   storage = {
     circuit_network_last_added = storage.circuit_network_last_added or {},
-    deathrattles = {}
+    deathrattles = storage.deathrattles or {},
+    grandfather = storage.grandfather or game.create_inventory(1)
   }
 end)
+
+local function tock()
+  storage.grandfather.insert{name = "coin", health = 0.5}
+  local num = script.register_on_object_destroyed(storage.grandfather[1].item)
+  storage.grandfather.clear()
+  return num
+end
 
 local wire_connection_whitelist = {
   -- TODO fill this out so i can use it in the events instead of an API call :P
@@ -257,13 +268,11 @@ script.on_event("perel-build", function (event)
         script.raise_event(event_data.name, event_data)
       end
 
-      -- this logic triggers a delayed subtick event so that the circuit network events are triggered after the wire is added
-      local trigger = game.surfaces[1].create_entity{name = "perel-trigger-entity", position = {0,0}}
-      storage.deathrattles[script.register_on_object_destroyed(trigger)] = {
+      -- trigger a delayed event
+      storage.deathrattles[tock()] = {
         events = events,
         event_data = event_data
       }
-      trigger.destroy()
       
       storage.circuit_network_last_added[event.player_index] = events[1] == "circuit_wire_added" and {
         entity = wire_destination,

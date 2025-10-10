@@ -1,6 +1,5 @@
 PEREL = PEREL or {}
 
-
 -- utility prototypes
 data:extend{
   {
@@ -14,11 +13,6 @@ data:extend{
     name = "perel-pipette",
     linked_game_control = "pipette",
     key_sequence = ""
-  },
-  {
-    type = "simple-entity-with-owner",
-    name = "perel-trigger-entity",
-    icon = util.empty_icon().icon
   },
   {
     type = "custom-event",
