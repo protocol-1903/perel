@@ -120,7 +120,7 @@ script.on_event({
             source = source_entity,
             source_connector_id = wire_connector_id,
             destination = wire_connection.target.owner,
-            destination_connector_id = wire_connection.wire_connector_id,
+            destination_connector_id = wire_connection.target.wire_connector_id,
             wire_type = wire_connection.wire_type,
           }
 
