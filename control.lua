@@ -328,6 +328,10 @@ script.on_event(defines.events.on_object_destroyed, function (event)
   local events = metadata.events or {}
   local event_data = metadata.event_data or {}
 
+  -- basic validation
+  event_data.source = event_data.source.valid and event_data.source or nil
+  event_data.destination = event_data.destination.valid and event_data.destination or nil
+
   for _, event_name in pairs(events) do
     event_data.name = defines.events["on_" .. event_name]
     script.raise_event(event_data.name, event_data)

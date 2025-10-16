@@ -147,11 +147,11 @@ defines.events = {
 ---@field player_index uint
 ---Tick the event was generated.
 ---@field tick uint
----The source entity of the wire removal.
+---The source entity of the wire removal. May not exist if the entity was destroyed.
 ---@field source LuaEntity
 ---The source connector of the wire removal.
 ---@field source_connector_id defines.wire_connector_id
----The destination entity of the wire removal.
+---The destination entity of the wire removal. May not exist if the entity was destroyed.
 ---@field destination LuaEntity
 ---The destination connector of the wire removal.
 ---@field destination_connector_id defines.wire_connection_id
@@ -221,11 +221,11 @@ defines.events = {
 ---@field player_index uint
 ---Tick the event was generated.
 ---@field tick uint
----The source entity of the destroyed circuit network.
+---The source entity of the destroyed circuit network. May not exist if the entity was destroyed.
 ---@field source LuaEntity
 ---The source connector of the destroyed circuit network.
 ---@field source_connector_id defines.wire_connector_id
----The destination entity of the destroyed circuit network.
+---The destination entity of the destroyed circuit network. May not exist if the entity was destroyed.
 ---@field destination LuaEntity
 ---The destination connector of the destroyed circuit network.
 ---@field destination_connector_id defines.wire_connection_id
@@ -295,11 +295,11 @@ defines.events = {
 ---@field player_index uint
 ---Tick the event was generated.
 ---@field tick uint
----The source entity of the split circuit network.
+---The source entity of the split circuit network. May not exist if the entity was destroyed.
 ---@field source LuaEntity
 ---The source connector of the split circuit network.
 ---@field source_connector_id defines.wire_connector_id
----The destination entity of the split circuit network.
+---The destination entity of the split circuit network. May not exist if the entity was destroyed.
 ---@field destination LuaEntity
 ---The destination connector of the split circuit network.
 ---@field destination_connector_id defines.wire_connection_id

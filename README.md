@@ -7,9 +7,9 @@ Includes intellisense integration if the mod file is unzipped in the working dir
 `on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`: (`pre_` circuit events are also supported)
     - `uint` player_index: The index of the player that caused the event.
     - `uint` tick: Tick the event was generated.
-    - `LuaEntity` source: The source entity of the wire connection.
+    - `?LuaEntity` source: The source entity of the wire connection. May not exist if the entity was destroyed.
     - `defines.wire_connector_id` source_connector_id: The source connector of the wire connection.
-    - `LuaEntity` destination: The destination entity of the wire connection.
+    - `?LuaEntity` destination: The destination entity of the wire connection. May not exist if the entity was destroyed.
     - `defines.wire_connector_id` destination_connector_id: The destination connector of the wire connection.
     - `defines.wire_type` wire_type: The wire type of the connection.
 
