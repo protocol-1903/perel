@@ -117,7 +117,6 @@ script.on_event({
           events[#events+1] = {
             player_index = event.player_index or nil,
             tick = game.tick,
-            source = source_entity,
             source_connector_id = wire_connector_id,
             destination = wire_connection.target.owner,
             destination_connector_id = wire_connection.target.wire_connector_id,
@@ -128,7 +127,6 @@ script.on_event({
           if existing_connections ~= 2 then
             -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
             for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              log(sub_wire_connection.target.owner)
               -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
               if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
                 existing_connections = existing_connections + 1
@@ -139,15 +137,24 @@ script.on_event({
         end
       end
 
-      -- raise events
-      for _, event_name in pairs({
+      local event_names = {
         "circuit_wire_removed",
         -- check how many existing connections were found to determine if merged or created should be used
-        existing_connections == 0 and "circuit_network_destroyed" or nil, -- no other networks detected, destroying network
+        existing_connections == 0 and "circuit_network_destroyed" or -- no other networks detected, destroying network
         existing_connections == 2 and "circuit_network_split" or nil -- 2+ networks detected, splitting networks
-      }) do
+      }
+
+      for _, event_data in pairs(events) do
+        storage.deathrattles[tock()] = {
+          events = event_names,
+          event_data = event_data
+        }
+      end
+
+      -- raise events
+      for _, event_name in pairs(event_names) do
         for _, event_data in pairs(events) do
-          event_data.name = defines.events["on_" .. event_name]
+          event_data.name = defines.events["on_pre_" .. event_name]
           script.raise_event(event_data.name, event_data)
         end
       end
@@ -265,11 +272,25 @@ script.on_event("perel-build", function (event)
       elseif events[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
         -- wire is connecting two disconnected networks
         events[#events+1] = "circuit_network_merged"
+      elseif events[1] == "circuit_wire_removed" then
+        -- disconnect entities
+        source_connector.disconnect_from(destination_connector)
+
+        -- if both have distinct nonconjoined networks
+        if source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+          -- both nonzero (existing) networks that are different, so network split
+          events[2] = "circuit_network_split"
+        elseif source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+          -- both zero (nonexistant) networks so network destroyed
+          events[2] = "circuit_network_destroyed"
+        end
+        
+        -- reconnect entities
+        source_connector.connect_to(destination_connector)
       end
 
-      -- prefire events
-      for i = 1, #events do
-        event_data.name = defines.events["on_pre_" .. events[i]]
+      for _, event_name in pairs(events) do
+        event_data.name = defines.events["on_pre_" .. event_name]
         script.raise_event(event_data.name, event_data)
       end
 
@@ -304,31 +325,20 @@ script.on_event(defines.events.on_object_destroyed, function (event)
   
   if not metadata then return end
 
-  local events = metadata.events
-  local event_data = metadata.event_data
+  local events = metadata.events or {}
+  local event_data = metadata.event_data or {}
 
-  if events and event_data then
-
-    local source_connector = event_data.source.get_wire_connector(event_data.source_connector_id, true)
-    local destination_connector = event_data.destination.get_wire_connector(event_data.destination_connector_id, true)
-
-    if events[1] == "circuit_wire_removed" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
-      -- circuit network is being split
-      events[#events+1] = "circuit_network_split"
-    elseif events[1] == "circuit_wire_removed" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and event_data.source.type ~= "entity-ghost" and event_data.destination.type ~= "entity-ghost" then
-      -- wire is connecting two disconnected networks
-      events[#events+1] = "circuit_network_destroyed"
-    end
-
-    for i = 1, #events do
-      event_data.name = defines.events["on_" .. events[i]]
-      script.raise_event(event_data.name, event_data)
-    end
+  for _, event_name in pairs(events) do
+    event_data.name = defines.events["on_" .. event_name]
+    script.raise_event(event_data.name, event_data)
   end
 
   -- clear data on exit
   storage.deathrattles[event.registration_number] = nil
 end)
+
+-- TODO
+-- fix place ghost merging networks instead of extending existing
 
 -- testing functionality
 --[[

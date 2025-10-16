@@ -16,16 +16,18 @@ Includes intellisense integration if the mod file is unzipped in the working dir
 Explicit support definitions (what events trigger what):
 `on_pre_circuit_wire_added` supports the following: player placing wires on ghost and normal entities
 `on_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities
+`on_pre_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
 `on_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
 `on_pre_circuit_network_created` supports the following: player placing wires on normal entities
 `on_circuit_network_created` supports the following: player placing wires on ghost and normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_network_destroyed` supports the following: player removing wires from normal entities
+`on_pre_circuit_network_destroyed` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
 `on_circuit_network_destroyed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
 `on_pre_circuit_network_merged` supports the following: player placing wires on normal entities
 `on_circuit_network_merged` supports the following: player placing wires on normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_network_split` supports the following: player removing wires from normal entities
+`on_pre_circuit_network_split` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
 `on_circuit_network_split` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
+
+WARNING: CERTAIN DESTRUCTION EVENTS MAY RETURN INVALID ENTITIES
 
 A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
 
