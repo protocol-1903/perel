@@ -1,27 +1,14 @@
+local perel = require "__perel__.handlers"
+
 assert(prototypes.item.coin, "ERROR: item 'coin' not found!")
 
-script.on_init(function (event)
-  storage = {
-    circuit_network_last_added = {},
-    deathrattles = {},
-    grandfather = game.create_inventory(1)
-  }
-end)
-
-script.on_configuration_changed(function (event)
+perel.on_init(function()
   storage = {
     circuit_network_last_added = storage.circuit_network_last_added or {},
     deathrattles = storage.deathrattles or {},
     grandfather = storage.grandfather or game.create_inventory(1)
   }
 end)
-
-local function tock()
-  storage.grandfather.insert{name = "coin", health = 0.5}
-  local num = script.register_on_object_destroyed(storage.grandfather[1].item)
-  storage.grandfather.clear()
-  return num
-end
 
 local wire_connection_whitelist = {
   -- TODO fill this out so i can use it in the events instead of an API call :P
@@ -40,13 +27,7 @@ local function nodes(type)
   }
 end
 
-script.on_event({
-  defines.events.on_built_entity,
-  defines.events.on_robot_built_entity,
-  defines.events.on_space_platform_built_entity,
-  defines.events.script_raised_built,
-  defines.events.script_raised_revive
-}, function (event)
+perel.on_event(perel.events.on_built, function (event)
   local source_entity = event.entity
   -- ignore ghosts and make sure it supports circuit wires
   if source_entity.type ~= "entity-ghost" and source_entity.prototype.get_max_circuit_wire_distance() ~= 0 then
@@ -55,7 +36,7 @@ script.on_event({
       local events = {}
       local existing_connections = 0
       -- for each connection
-      for i, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
+      for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
         -- ignore radar and script connections
         if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
           -- generate event data
@@ -79,15 +60,24 @@ script.on_event({
         end
       end
 
-      -- raise events
-      for _, event_name in pairs({
+      local event_names = {
         "circuit_wire_added",
         -- check how many existing connections were found to determine if merged or created should be used
         existing_connections == 0 and "circuit_network_created" or nil, -- no other networks detected, creating network
         existing_connections == 2 and "circuit_network_merged" or nil -- 2+ networks detected, merging networks
-      }) do
+      }
+
+      for _, event_data in pairs(events) do
+        storage.deathrattles[perel.tock()] = {
+          events = event_names,
+          event_data = event_data
+        }
+      end
+
+      -- raise events
+      for _, event_name in pairs(event_names) do
         for _, event_data in pairs(events) do
-          event_data.name = defines.events["on_" .. event_name]
+          event_data.name = defines.events["on_pre_" .. event_name]
           script.raise_event(event_data.name, event_data)
         end
       end
@@ -95,13 +85,7 @@ script.on_event({
   end
 end)
 
-script.on_event({
-  defines.events.on_player_mined_entity,
-  defines.events.on_robot_mined_entity,
-  defines.events.on_space_platform_mined_entity,
-  defines.events.script_raised_destroy,
-  defines.events.on_entity_died
-}, function (event)
+perel.on_event(perel.events.on_destroyed, function (event)
   local source_entity = event.entity
   -- ignore ghosts and make sure it supports circuit wires
   if source_entity.type ~= "entity-ghost" and source_entity.prototype.get_max_circuit_wire_distance() ~= 0 then
@@ -145,7 +129,7 @@ script.on_event({
       }
 
       for _, event_data in pairs(events) do
-        storage.deathrattles[tock()] = {
+        storage.deathrattles[perel.tock()] = {
           events = event_names,
           event_data = event_data
         }
@@ -162,7 +146,7 @@ script.on_event({
   end
 end)
 
-script.on_event(defines.events.on_player_cursor_stack_changed, function (event)
+perel.on_event(defines.events.on_player_cursor_stack_changed, function (event)
   local player = game.get_player(event.player_index)
   local item = player.cursor_stack
   if player.is_cursor_empty() or not item or not item.valid_for_read or (item.name ~= "green-wire" and item.name ~= "red-wire") then
@@ -171,11 +155,11 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function (event)
   end
 end)
 
-script.on_event("perel-pipette", function (event)
+perel.on_event("perel-pipette", function (event)
   storage.circuit_network_last_added[event.player_index] = nil
 end)
 
-script.on_event("perel-build", function (event)
+perel.on_event("perel-build", function (event)
 
   local player = game.get_player(event.player_index)
   
@@ -295,7 +279,7 @@ script.on_event("perel-build", function (event)
       end
 
       -- trigger a delayed event
-      storage.deathrattles[tock()] = {
+      storage.deathrattles[perel.tock()] = {
         events = events,
         event_data = event_data
       }
@@ -319,7 +303,7 @@ script.on_event("perel-build", function (event)
   end
 end)
 
-script.on_event(defines.events.on_object_destroyed, function (event)
+perel.on_event(defines.events.on_object_destroyed, function (event)
 
   local metadata = storage.deathrattles[event.registration_number]
   
@@ -329,8 +313,8 @@ script.on_event(defines.events.on_object_destroyed, function (event)
   local event_data = metadata.event_data or {}
 
   -- basic validation
-  event_data.source = event_data.source.valid and event_data.source or nil
-  event_data.destination = event_data.destination.valid and event_data.destination or nil
+  event_data.source = event_data.source and event_data.source.valid and event_data.source or nil
+  event_data.destination = event_data.destination and event_data.destination.valid and event_data.destination or nil
 
   for _, event_name in pairs(events) do
     event_data.name = defines.events["on_" .. event_name]
@@ -342,22 +326,22 @@ script.on_event(defines.events.on_object_destroyed, function (event)
 end)
 
 -- TODO
--- fix place ghost merging networks instead of extending existing
+-- update place and mine events to be more like the network checking steps from before, so we can have pre_ and on_ events for everything
 
 -- testing functionality
---[[
+---[[
 
-script.on_event(defines.events.on_pre_circuit_wire_added, function() game.print("on_pre_circuit_wire_added", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_wire_added, function() game.print("on_circuit_wire_added", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_pre_circuit_wire_removed, function() game.print("on_pre_circuit_wire_removed", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_wire_removed, function() game.print("on_circuit_wire_removed", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_pre_circuit_network_created, function() game.print("on_pre_circuit_network_created", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_network_created, function() game.print("on_circuit_network_created", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_pre_circuit_network_destroyed, function() game.print("on_pre_circuit_network_destroyed", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_network_destroyed, function() game.print("on_circuit_network_destroyed", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_pre_circuit_network_merged, function() game.print("on_pre_circuit_network_merged", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_network_merged, function() game.print("on_circuit_network_merged", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_pre_circuit_network_split, function() game.print("on_pre_circuit_network_split", {skip = defines.print_skip.never}) end)
-script.on_event(defines.events.on_circuit_network_split, function() game.print("on_circuit_network_split", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_wire_added, function() game.print("on_pre_circuit_wire_added", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_wire_added, function() game.print("on_circuit_wire_added", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_wire_removed, function() game.print("on_pre_circuit_wire_removed", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_wire_removed, function() game.print("on_circuit_wire_removed", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_network_created, function() game.print("on_pre_circuit_network_created", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_network_created, function() game.print("on_circuit_network_created", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_network_destroyed, function() game.print("on_pre_circuit_network_destroyed", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_network_destroyed, function() game.print("on_circuit_network_destroyed", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_network_merged, function() game.print("on_pre_circuit_network_merged", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_network_merged, function() game.print("on_circuit_network_merged", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_pre_circuit_network_split, function() game.print("on_pre_circuit_network_split", {skip = defines.print_skip.never}) end)
+perel.on_event(defines.events.on_circuit_network_split, function() game.print("on_circuit_network_split", {skip = defines.print_skip.never}) end)
 
 --]]
