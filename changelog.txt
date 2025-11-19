@@ -1,10 +1,14 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: ????
-  Bugfixes:
-    - Fixed event.name being a string of the event name instead of the integer registration identifier
-    - Prevent a VERY STRONG memory leak
+  Features:
+    - Proper support for most nonstandard methods of interaction [platforms/robots/players/scripts(opt-in)]
+  Changes:
+    - Switched to an internal event manager for easier management later on
     - Switch to a ScriptInventory to trigger subtick events
+  Bugfixes:
+    - Prevent a VERY STRONG memory leak
+    - Fixed event.name being a string of the event name instead of the integer registration identifier
     - Fixed on_pre_circuit_network_destroyed and on_pre_circuit_network_split not firing
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
