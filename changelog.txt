@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
-Date: ????
+Date: 2025-11-19
   Features:
     - Proper support for most nonstandard methods of interaction [platforms/robots/players/scripts(opt-in)/blueprints]
   Changes:
