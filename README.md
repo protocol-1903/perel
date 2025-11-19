@@ -14,23 +14,22 @@ Includes intellisense integration if the mod file is unzipped in the working dir
     - `defines.wire_type` wire_type: The wire type of the connection.
 
 Explicit support definitions (what events trigger what):
-`on_pre_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
-`on_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
-`on_pre_circuit_network_created` supports the following: player placing wires on normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_circuit_network_created` supports the following: player placing wires on ghost and normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_network_destroyed` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
-`on_circuit_network_destroyed` supports the following: player removing wires from ghost and normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
-`on_pre_circuit_network_merged` supports the following: player placing wires on normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_circuit_network_merged` supports the following: player placing wires on normal entities, platforms/robots/players/scripts(opt-in) building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_network_split` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
-`on_circuit_network_split` supports the following: player removing wires from normal entities, platforms/robots/players/scripts(opt-in)/environment destroying non-ghost entities with wires
+`on_pre_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_circuit_wire_removed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_pre_circuit_network_created` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_circuit_network_created` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_circuit_network_destroyed` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_circuit_network_destroyed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_pre_circuit_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_circuit_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
 
 WARNING: CERTAIN DESTRUCTION EVENTS MAY RETURN INVALID ENTITIES
 
 A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
-
-TODO: add pre_ event support to the new interactions (platforms, robots, players, scripts)
+A note about scripts(opt-in): If a script does something silently (i.e. by not using raise_event inside the api call) this mod will not be capable of detecting it. If you need 100% precision, I recommend using a script trigger place event on the prototype definition instead!
 
 If you have a mod idea, let me know and I can look into it.

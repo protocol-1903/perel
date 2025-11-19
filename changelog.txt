@@ -2,7 +2,7 @@
 Version: 1.0.2
 Date: ????
   Features:
-    - Proper support for most nonstandard methods of interaction [platforms/robots/players/scripts(opt-in)]
+    - Proper support for most nonstandard methods of interaction [platforms/robots/players/scripts(opt-in)/blueprints]
   Changes:
     - Switched to an internal event manager for easier management later on
     - Switch to a ScriptInventory to trigger subtick events
