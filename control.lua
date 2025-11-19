@@ -101,6 +101,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
           events[#events+1] = {
             player_index = event.player_index or nil,
             tick = game.tick,
+            source = source_entity,
             source_connector_id = wire_connector_id,
             destination = wire_connection.target.owner,
             destination_connector_id = wire_connection.target.wire_connector_id,
@@ -329,7 +330,7 @@ end)
 -- update place and mine events to be more like the network checking steps from before, so we can have pre_ and on_ events for everything
 
 -- testing functionality
----[[
+--[[
 
 perel.on_event(defines.events.on_pre_circuit_wire_added, function() game.print("on_pre_circuit_wire_added", {skip = defines.print_skip.never}) end)
 perel.on_event(defines.events.on_circuit_wire_added, function() game.print("on_circuit_wire_added", {skip = defines.print_skip.never}) end)
