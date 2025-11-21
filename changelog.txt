@@ -2,6 +2,10 @@
 Version: 1.0.4
 Date: ????
   Changes:
+    - Made the perel framework global
+    - Generalized post event subtick handler
+    - Split cirucit network handlers into it's own file
+    - Merged fire_events into handlers
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2025-11-19

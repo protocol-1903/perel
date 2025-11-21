@@ -10,7 +10,7 @@ end)
 
 require "__perel__.scripts.circuit_network"
 
--- generic post_event_handler via deathrattles
+-- generic post event subtick handler via deathrattles
 perel.on_event(defines.events.on_object_destroyed, function (event)
   local metadata = storage.event_deathrattles[event.registration_number]
   
