@@ -1,11 +1,3 @@
-perel.on_init(function()
-  storage = {
-    circuit_network_last_added = storage.circuit_network_last_added or {},
-    deathrattles = storage.deathrattles or {},
-    grandfather = storage.grandfather or game.create_inventory(1)
-  }
-end)
-
 local wire_connection_whitelist = {
   -- TODO fill this out so i can use it in the events instead of an API call :P
   -- also note, skip splitters until 2.0.67
@@ -64,7 +56,7 @@ perel.on_event(perel.events.on_built, function (event)
       }
 
       for _, event_data in pairs(events) do
-        storage.deathrattles[perel.tock()] = {
+        storage.event_deathrattles[perel.tock()] = {
           events = event_names,
           event_data = event_data
         }
@@ -126,7 +118,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
       }
 
       for _, event_data in pairs(events) do
-        storage.deathrattles[perel.tock()] = {
+        storage.event_deathrattles[perel.tock()] = {
           events = event_names,
           event_data = event_data
         }
@@ -276,7 +268,7 @@ perel.on_event("perel-build", function (event)
       end
 
       -- trigger a delayed event
-      storage.deathrattles[perel.tock()] = {
+      storage.event_deathrattles[perel.tock()] = {
         events = events,
         event_data = event_data
       }
@@ -298,26 +290,4 @@ perel.on_event("perel-build", function (event)
       } or nil
     end
   end
-end)
-
-perel.on_event(defines.events.on_object_destroyed, function (event)
-
-  local metadata = storage.deathrattles[event.registration_number]
-  
-  if not metadata then return end
-
-  local events = metadata.events or {}
-  local event_data = metadata.event_data or {}
-
-  -- basic validation
-  event_data.source = event_data.source and event_data.source.valid and event_data.source or nil
-  event_data.destination = event_data.destination and event_data.destination.valid and event_data.destination or nil
-
-  for _, event_name in pairs(events) do
-    event_data.name = defines.events["on_" .. event_name]
-    script.raise_event(event_data.name, event_data)
-  end
-
-  -- clear data on exit
-  storage.deathrattles[event.registration_number] = nil
 end)
