@@ -55,26 +55,16 @@ perel.tock = function()
   return num
 end
 
--- fire 1-n events with the same event_data
--- if delayed is specified, then fires on_pre_ events and delays full event triggering
-perel.fire_events = function(event_names, event_data, delayed)
-  -- normalize
-  event_names = type(event_names) == "table" and event_names or {event_names}
-
-  -- prefire, if delayed is specified
-  if delayed then
-    storage.event_deathrattles[perel.tock()] = {
-      events = event_names,
-      event_data = event_data
-    }
-  end
+-- fires on_pre_ events and delays full event triggering
+perel.delayed_fire_event = function(event_name, event_data)
+  storage.event_deathrattles[perel.tock()] = {
+    events = event_name,
+    event_data = event_data
+  }
 
   -- raise events
-  for _, event_name in pairs(event_names) do
-    event_data.name = defines.events[(delayed and "on_pre_" or "") .. event_name]
-    script.raise_event(event_data.name, event_data)
-  end
-
+  event_data.name = defines.events["on_pre_" .. event_name]
+  script.raise_event(event_data.name, event_data)
 end
 
 return perel

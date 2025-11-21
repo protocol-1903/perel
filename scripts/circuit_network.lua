@@ -20,14 +20,14 @@ perel.on_event(perel.events.on_built, function (event)
   if storage.wire_connection_target_cache[source_entity.name] then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
-      local events = {}
+      local event_data_set = {}
       local existing_connections = 0
       -- for each connection
       for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
         -- ignore radar and script connections
         if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
           -- generate event data
-          events[#events+1] = {
+          event_data_set[#event_data_set+1] = {
             player_index = event.player_index or nil,
             tick = game.tick,
             source = source_entity,
@@ -47,17 +47,15 @@ perel.on_event(perel.events.on_built, function (event)
         end
       end
 
-      local event_names = {
+      -- raise events
+      for _, event_name in pairs{
         "circuit_wire_added",
         -- check how many existing connections were found to determine if merged or created should be used
         existing_connections == 0 and "circuit_network_created" or nil, -- no other networks detected, creating network
         existing_connections == 2 and "circuit_network_merged" or nil -- 2+ networks detected, merging networks
-      }
-
-      -- raise events
-      for _, event_data in pairs(events) do
-        perel.fire_events(event_names, event_data, true)
-      end
+      } do for _, event_data in pairs(event_data_set) do
+        perel.delayed_fire_event(event_name, event_data)
+      end end
     end
   end
 end)
@@ -72,14 +70,14 @@ perel.on_event(perel.events.on_destroyed, function (event)
   if storage.wire_connection_target_cache[source_entity.name] then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
-      local events = {}
+      local event_data_set = {}
       local existing_connections = 0
       -- for each connection
       for i, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
         -- ignore radar and script connections
         if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
           -- generate event data
-          events[#events+1] = {
+          event_data_set[#event_data_set+1] = {
             player_index = event.player_index or nil,
             tick = game.tick,
             source = source_entity,
@@ -103,17 +101,15 @@ perel.on_event(perel.events.on_destroyed, function (event)
         end
       end
 
-      local event_names = {
+      -- raise events
+      for _, event_name in pairs{
         "circuit_wire_removed",
         -- check how many existing connections were found to determine if merged or created should be used
         existing_connections == 0 and "circuit_network_destroyed" or -- no other networks detected, destroying network
         existing_connections == 2 and "circuit_network_split" or nil -- 2+ networks detected, splitting networks
-      }
-
-      -- raise events
-      for _, event_data in pairs(events) do
-        perel.fire_events(event_names, event_data, true)
-      end
+      } do for _, event_data in pairs(event_data_set) do
+        perel.delayed_fire_event(event_name, event_data)
+      end end
     end
   end
 end)
@@ -251,7 +247,9 @@ perel.on_event("perel-build", function (event)
       end
 
       -- raise events
-      perel.fire_events(event_names, event_data, true)
+      for _, event_name in pairs(event_names) do
+        perel.delayed_fire_event(event_name, event_data)
+      end
       
       storage.circuit_network_last_added[event.player_index] = event_names[1] == "circuit_wire_added" and {
         entity = wire_destination,
