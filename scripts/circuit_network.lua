@@ -55,19 +55,9 @@ perel.on_event(perel.events.on_built, function (event)
         existing_connections == 2 and "circuit_network_merged" or nil -- 2+ networks detected, merging networks
       }
 
-      for _, event_data in pairs(events) do
-        storage.event_deathrattles[perel.tock()] = {
-          events = event_names,
-          event_data = event_data
-        }
-      end
-
       -- raise events
-      for _, event_name in pairs(event_names) do
-        for _, event_data in pairs(events) do
-          event_data.name = defines.events["on_pre_" .. event_name]
-          script.raise_event(event_data.name, event_data)
-        end
+      for _, event_data in pairs(events) do
+        perel.fire_events(event_names, event_data, true)
       end
     end
   end
@@ -117,19 +107,9 @@ perel.on_event(perel.events.on_destroyed, function (event)
         existing_connections == 2 and "circuit_network_split" or nil -- 2+ networks detected, splitting networks
       }
 
-      for _, event_data in pairs(events) do
-        storage.event_deathrattles[perel.tock()] = {
-          events = event_names,
-          event_data = event_data
-        }
-      end
-
       -- raise events
-      for _, event_name in pairs(event_names) do
-        for _, event_data in pairs(events) do
-          event_data.name = defines.events["on_pre_" .. event_name]
-          script.raise_event(event_data.name, event_data)
-        end
+      for _, event_data in pairs(events) do
+        perel.fire_events(event_names, event_data, true)
       end
     end
   end
@@ -203,7 +183,7 @@ perel.on_event("perel-build", function (event)
       local destination_dir = wire_destination.direction
 
       -- precalculate event data for later use and firing
-      local event_data, events = {
+      local event_data, event_names = {
         player_index = event.player_index,
         tick = game.tick,
         source = wire_source,
@@ -233,47 +213,39 @@ perel.on_event("perel-build", function (event)
       -- check if a wire is being added or removed
       if wire_source.get_wire_connector(event_data.source_connector_id, true).is_connected_to(wire_destination.get_wire_connector(event_data.destination_connector_id, true)) then
         -- wire is being removed
-        events = {"circuit_wire_removed"}
+        event_names = {"circuit_wire_removed"}
       else
         -- wire is being added
-        events = {"circuit_wire_added"}
+        event_names = {"circuit_wire_added"}
       end
 
-      if events[1] == "circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+      if event_names[1] == "circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
         -- wire is being added between two nonexistant networks
-        events[#events+1] = "circuit_network_created"
-      elseif events[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+        event_names[#event_names+1] = "circuit_network_created"
+      elseif event_names[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
         -- wire is connecting two disconnected networks
-        events[#events+1] = "circuit_network_merged"
-      elseif events[1] == "circuit_wire_removed" then
+        event_names[#event_names+1] = "circuit_network_merged"
+      elseif event_names[1] == "circuit_wire_removed" then
         -- disconnect entities
         source_connector.disconnect_from(destination_connector)
 
         -- if both have distinct nonconjoined networks
         if source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
           -- both nonzero (existing) networks that are different, so network split
-          events[2] = "circuit_network_split"
+          event_names[2] = "circuit_network_split"
         elseif source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
           -- both zero (nonexistant) networks so network destroyed
-          events[2] = "circuit_network_destroyed"
+          event_names[2] = "circuit_network_destroyed"
         end
         
         -- reconnect entities
         source_connector.connect_to(destination_connector)
       end
 
-      for _, event_name in pairs(events) do
-        event_data.name = defines.events["on_pre_" .. event_name]
-        script.raise_event(event_data.name, event_data)
-      end
-
-      -- trigger a delayed event
-      storage.event_deathrattles[perel.tock()] = {
-        events = events,
-        event_data = event_data
-      }
+      -- raise events
+      perel.fire_events(event_names, event_data, true)
       
-      storage.circuit_network_last_added[event.player_index] = events[1] == "circuit_wire_added" and {
+      storage.circuit_network_last_added[event.player_index] = event_names[1] == "circuit_wire_added" and {
         entity = wire_destination,
         connector_id = defines.wire_connector_id[(
           destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
