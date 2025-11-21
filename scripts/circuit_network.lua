@@ -1,8 +1,3 @@
-local wire_connection_whitelist = {
-  -- TODO fill this out so i can use it in the events instead of an API call :P
-  -- also note, skip splitters until 2.0.67
-}
-
 local function nodes(type)
   return (type == "decider-combinator" or type == "arithmetic-combinator" or type == "selector-combinator") and {
     defines.wire_connector_id.combinator_input_red,
@@ -17,8 +12,12 @@ end
 
 perel.on_event(perel.events.on_built, function (event)
   local source_entity = event.entity
+  -- cache if wire connections are supported
+  if storage.wire_connection_target_cache[source_entity.name] == nil then
+    storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
+  end
   -- ignore ghosts and make sure it supports circuit wires
-  if source_entity.type ~= "entity-ghost" and source_entity.prototype.get_max_circuit_wire_distance() ~= 0 then
+  if storage.wire_connection_target_cache[source_entity.name] then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local events = {}
@@ -65,8 +64,12 @@ end)
 
 perel.on_event(perel.events.on_destroyed, function (event)
   local source_entity = event.entity
+  -- cache if wire connections are supported
+  if storage.wire_connection_target_cache[source_entity.name] == nil then
+    storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
+  end
   -- ignore ghosts and make sure it supports circuit wires
-  if source_entity.type ~= "entity-ghost" and source_entity.prototype.get_max_circuit_wire_distance() ~= 0 then
+  if storage.wire_connection_target_cache[source_entity.name] then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local events = {}
@@ -139,8 +142,13 @@ perel.on_event("perel-build", function (event)
 
   local destination_prototype = wire_destination.name == "entity-ghost" and wire_destination.ghost_prototype or wire_destination.prototype
   
+  -- cache if wire connections are supported
+  if storage.wire_connection_target_cache[destination_prototype.name] == nil then
+    storage.wire_connection_target_cache[destination_prototype.name] = destination_prototype.get_max_circuit_wire_distance() ~= 0
+  end
+
   -- ensure the entity (if exist) supports the circuit network
-  if destination_prototype.get_max_circuit_wire_distance() ~= 0 then
+  if storage.wire_connection_target_cache[destination_prototype.name] then
     
     local wire_source_data = storage.circuit_network_last_added[event.player_index]
     

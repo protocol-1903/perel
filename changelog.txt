@@ -6,6 +6,7 @@ Date: ????
     - Generalized post event subtick handler
     - Split cirucit network handlers into it's own file
     - Merged fire_events into handlers
+    - Cache valid wire connection targets
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2025-11-19
