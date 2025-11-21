@@ -13,20 +13,24 @@ data:extend{
     name = "perel-pipette",
     linked_game_control = "pipette",
     key_sequence = ""
-  },
-  {
+  }
+}
+
+-- circuit network event handlers
+data:extend{
+  { -- fired regardless of entity type
     type = "custom-event",
     name = "on_pre_circuit_wire_added"
   },
-  {
+  { -- fired regardless of entity type
     type = "custom-event",
     name = "on_circuit_wire_added"
   },
-  {
+  { -- fired regardless of entity type
     type = "custom-event",
     name = "on_pre_circuit_wire_removed"
   },
-  {
+  { -- fired regardless of entity type
     type = "custom-event",
     name = "on_circuit_wire_removed"
   },
@@ -61,5 +65,41 @@ data:extend{
   { -- only fired when both entities are non-ghosts
     type = "custom-event",
     name = "on_circuit_network_split"
+  }
+}
+
+-- electric network event handlers
+data:extend{
+  {
+    type = "custom-event",
+    name = "on_pre_electric_network_created"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_network_created"
+  },
+  {
+    type = "custom-event",
+    name = "on_pre_electric_network_destroyed"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_network_destroyed"
+  },
+  {
+    type = "custom-event",
+    name = "on_pre_electric_network_merged"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_network_merged"
+  },
+  {
+    type = "custom-event",
+    name = "on_pre_electric_network_split"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_network_split"
   }
 }
