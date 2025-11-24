@@ -1,12 +1,14 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.4
-Date: ????
+Date: 2025-11-23
   Changes:
     - Made the perel framework global
     - Generalized post event subtick handler
     - Split cirucit network handlers into it's own file
     - Merged event firing into handlers
     - Cache valid wire connection targets
+  Bugfixes:
+    - Fixed a crash when wire_destination is not valid
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2025-11-19

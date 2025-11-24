@@ -132,7 +132,7 @@ perel.on_event("perel-build", function (event)
   local player = game.get_player(event.player_index)
   
   -- only check for new network connections if the player is holding a wire and hovering over an entity
-  if player.is_cursor_empty() or not player.cursor_stack or not player.cursor_stack.valid_for_read or (player.cursor_stack.name ~= "green-wire" and player.cursor_stack.name ~= "red-wire") or not player.selected then return end
+  if player.is_cursor_empty() or not player.cursor_stack or not player.cursor_stack.valid_for_read or (player.cursor_stack.name ~= "green-wire" and player.cursor_stack.name ~= "red-wire") or not player.selected or not player.selected.valid then return end
 
   local wire_destination = player.selected
 
