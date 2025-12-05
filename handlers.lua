@@ -20,6 +20,48 @@ perel.events.on_destroyed = {
 
 perel.event_handlers = {}
 
+perel.enabled_events = {}
+
+-- index over all startup settings and note which events should be enabled
+-- probably a bad idea but oh well
+local all_events = settings.startup["perel-enable-all-events"].value
+for name, setting in pairs(settings.startup) do
+  if name:sub(1,6) == "perel_" and (all_events or setting.value) then
+    perel.enabled_events[name:sub(7)] = true
+  end
+end
+
+-- easy way to check if entire sections of runtime code are required
+perel.event_categories = {}
+perel.event_categories.circuit_wire =
+  perel.enabled_events.pre_circuit_wire_added or
+  perel.enabled_events.circuit_wire_added or
+  perel.enabled_events.pre_circuit_wire_removed or
+  perel.enabled_events.circuit_wire_removed
+perel.event_categories.circuit_network =
+  perel.enabled_events.pre_circuit_network_created or
+  perel.enabled_events.circuit_network_created or
+  perel.enabled_events.pre_circuit_network_destroyed or
+  perel.enabled_events.circuit_network_destroyed or
+  perel.enabled_events.pre_circuit_network_merged or
+  perel.enabled_events.circuit_network_merged or
+  perel.enabled_events.pre_circuit_network_split or
+  perel.enabled_events.circuit_network_split
+perel.event_categories.electric_wire =
+  perel.enabled_events.pre_electric_wire_added or
+  perel.enabled_events.electric_wire_added or
+  perel.enabled_events.pre_electric_wire_removed or
+  perel.enabled_events.electric_wire_removed
+perel.event_categories.electric_network =
+  perel.enabled_events.pre_electric_network_created or
+  perel.enabled_events.electric_network_created or
+  perel.enabled_events.pre_electric_network_destroyed or
+  perel.enabled_events.electric_network_destroyed or
+  perel.enabled_events.pre_electric_network_merged or
+  perel.enabled_events.electric_network_merged or
+  perel.enabled_events.pre_electric_network_split or
+  perel.enabled_events.electric_network_split
+
 -- save event for later when registered
 perel.on_event = function(event, handler)
   for _, event_id in pairs(type(event) == "table" and event or {event}) do
@@ -55,16 +97,19 @@ perel.tock = function()
   return num
 end
 
--- fires on_pre_ events and delays full event triggering
+-- fires on_pre_ events and delays full event triggering, if enabled
 perel.delayed_fire_event = function(event_name, event_data)
-  storage.event_deathrattles[perel.tock()] = {
-    events = event_name,
-    event_data = event_data
-  }
-
-  -- raise events
-  event_data.name = defines.events["on_pre_" .. event_name]
-  script.raise_event(event_data.name, event_data)
+  if perel.enabled_events[event_name] then
+    storage.event_deathrattles[perel.tock()] = {
+      event_name = event_name,
+      event_data = event_data
+    }
+  end
+  
+  if perel.enabled_events["pre_" .. event_name] then
+    event_data.name = defines.events["on_pre_" .. event_name]
+    script.raise_event(event_data.name, event_data)
+  end
 end
 
 return perel

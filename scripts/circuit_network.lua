@@ -1,3 +1,5 @@
+if not perel.event_categories.circuit_wire and not perel.event_categories.circuit_network then return end
+
 local function nodes(type)
   return (type == "decider-combinator" or type == "arithmetic-combinator" or type == "selector-combinator") and {
     defines.wire_connector_id.combinator_input_red,
@@ -21,7 +23,7 @@ perel.on_event(perel.events.on_built, function (event)
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
-      local existing_connections = 0
+      local existing_connections = perel.event_categories.circuit_network and 0 or 3
       -- for each connection
       for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
         -- ignore radar and script connections
@@ -36,12 +38,15 @@ perel.on_event(perel.events.on_built, function (event)
             destination_connector_id = wire_connection.target.wire_connector_id,
             wire_type = wire_connection.wire_type,
           }
-
-          -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-          for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-            -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
-            if existing_connections ~= 2 and sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-              existing_connections = existing_connections + 1
+          
+          -- checking may not be required
+          if existing_connections < 2 then
+            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+              -- only count entities that are not script/radar connections and not the entity that caused this event
+              if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+                existing_connections = existing_connections + 1
+              end
             end
           end
         end
@@ -71,9 +76,9 @@ perel.on_event(perel.events.on_destroyed, function (event)
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
-      local existing_connections = 0
+      local existing_connections = perel.event_categories.circuit_network and 0 or 3
       -- for each connection
-      for i, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
+      for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
         -- ignore radar and script connections
         if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
           -- generate event data
@@ -88,10 +93,10 @@ perel.on_event(perel.events.on_destroyed, function (event)
           }
           
           -- checking may not be required
-          if existing_connections ~= 2 then
+          if existing_connections < 2 then
             -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
             for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event, also skip if we already know of 2 other networks so we'd fire merged anyway
+              -- only count entities that are not script/radar connections and not the entity that caused this event
               if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
                 existing_connections = existing_connections + 1
                 break
@@ -114,28 +119,30 @@ perel.on_event(perel.events.on_destroyed, function (event)
   end
 end)
 
+-- no need to track wire movements if no events will be fired
+if not perel.event_categories.circuit_wire then return end
+
+-- remove monitor, if no longer holding a wire
 perel.on_event(defines.events.on_player_cursor_stack_changed, function (event)
   local player = game.get_player(event.player_index)
   local item = player.cursor_stack
   if player.is_cursor_empty() or not item or not item.valid_for_read or (item.name ~= "green-wire" and item.name ~= "red-wire") then
-    -- remove circuit_network_monitor
     storage.circuit_network_last_added[event.player_index] = nil
   end
 end)
 
+-- you can't pipette a wire so just nil out regardless
 perel.on_event("perel-pipette", function (event)
   storage.circuit_network_last_added[event.player_index] = nil
 end)
 
 perel.on_event("perel-build", function (event)
-
   local player = game.get_player(event.player_index)
   
   -- only check for new network connections if the player is holding a wire and hovering over an entity
   if player.is_cursor_empty() or not player.cursor_stack or not player.cursor_stack.valid_for_read or (player.cursor_stack.name ~= "green-wire" and player.cursor_stack.name ~= "red-wire") or not player.selected or not player.selected.valid then return end
 
   local wire_destination = player.selected
-
   local destination_prototype = wire_destination.name == "entity-ghost" and wire_destination.ghost_prototype or wire_destination.prototype
   
   -- cache if wire connections are supported
@@ -145,12 +152,10 @@ perel.on_event("perel-build", function (event)
 
   -- ensure the entity (if exist) supports the circuit network
   if storage.wire_connection_target_cache[destination_prototype.name] then
-    
     local wire_source_data = storage.circuit_network_last_added[event.player_index]
     
     -- if the first entity selected, save it and return early
-    if not storage.circuit_network_last_added[event.player_index] then
-
+    if not wire_source_data then
       -- save data in variables for calculating combinator input/output selection
       local cursor_pos = event.cursor_position
       local destination_pos = wire_destination.position
@@ -187,7 +192,7 @@ perel.on_event("perel-build", function (event)
       local destination_dir = wire_destination.direction
 
       -- precalculate event data for later use and firing
-      local event_data, event_names = {
+      local event_data = {
         player_index = event.player_index,
         tick = game.tick,
         source = wire_source,
@@ -210,40 +215,34 @@ perel.on_event("perel-build", function (event)
         wire_type = defines.wire_type[player.cursor_stack.name:sub(1,-6)],
       }
 
-
       local source_connector = wire_source.get_wire_connector(event_data.source_connector_id, true)
       local destination_connector = wire_destination.get_wire_connector(event_data.destination_connector_id, true)
 
-      -- check if a wire is being added or removed
-      if wire_source.get_wire_connector(event_data.source_connector_id, true).is_connected_to(wire_destination.get_wire_connector(event_data.destination_connector_id, true)) then
-        -- wire is being removed
-        event_names = {"circuit_wire_removed"}
-      else
-        -- wire is being added
-        event_names = {"circuit_wire_added"}
-      end
+      local event_names = {source_connector.is_connected_to(destination_connector) and "circuit_wire_removed" or "circuit_wire_added"}
 
-      if event_names[1] == "circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
-        -- wire is being added between two nonexistant networks
-        event_names[#event_names+1] = "circuit_network_created"
-      elseif event_names[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
-        -- wire is connecting two disconnected networks
-        event_names[#event_names+1] = "circuit_network_merged"
-      elseif event_names[1] == "circuit_wire_removed" then
-        -- disconnect entities
-        source_connector.disconnect_from(destination_connector)
+      if perel.event_categories.circuit_network then
+        if event_names[1] == "circuit_wire_added" and source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+          -- wire is being added between two nonexistant networks
+          event_names[#event_names+1] = "circuit_network_created"
+        elseif event_names[1] == "circuit_wire_added" and source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+          -- wire is connecting two disconnected networks
+          event_names[#event_names+1] = "circuit_network_merged"
+        elseif event_names[1] == "circuit_wire_removed" then
+          -- disconnect entities
+          source_connector.disconnect_from(destination_connector)
 
-        -- if both have distinct nonconjoined networks
-        if source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
-          -- both nonzero (existing) networks that are different, so network split
-          event_names[2] = "circuit_network_split"
-        elseif source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
-          -- both zero (nonexistant) networks so network destroyed
-          event_names[2] = "circuit_network_destroyed"
+          -- if both have distinct nonconjoined networks
+          if source_connector.network_id ~= destination_connector.network_id and source_connector.network_id ~= 0 and destination_connector.network_id ~= 0 then
+            -- both nonzero (existing) networks that are different, so network split
+            event_names[2] = "circuit_network_split"
+          elseif source_connector.network_id == destination_connector.network_id and source_connector.network_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+            -- both zero (nonexistant) networks so network destroyed
+            event_names[2] = "circuit_network_destroyed"
+          end
+          
+          -- reconnect entities
+          source_connector.connect_to(destination_connector)
         end
-        
-        -- reconnect entities
-        source_connector.connect_to(destination_connector)
       end
 
       -- raise events

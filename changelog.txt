@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: ????
+  Changes:
+    - Added perel.enabled_events and perel.event_categories for easy checking of which events have been registered to listen to
+    - Updated validification for event firing
+    - Added support for universal event registration for testing and development purposes
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2025-11-23
   Changes:
