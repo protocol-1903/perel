@@ -1,10 +1,12 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.5
-Date: ????
+Date: 2025-12-04
   Changes:
     - Added perel.enabled_events and perel.event_categories for easy checking of which events have been registered to listen to
     - Updated validification for event firing
     - Added support for universal event registration for testing and development purposes
+  Bugfixes:
+    - Fixed a crash when placing a wall
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2025-11-23

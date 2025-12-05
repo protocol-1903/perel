@@ -12,6 +12,22 @@ local function nodes(type)
   }
 end
 
+local function invalid_wall(entity)
+  local type = entity.type == "entity-ghost" and entity.ghost_type or entity.type
+  if type ~= "wall" then return false end
+  for _, direction in pairs{
+    "north",
+    "east",
+    "south",
+    "west"
+  } do
+    local neighbour = entity.neighbours[direction]
+    local type = neighbour and (neighbour.type == "entity-ghost" and neighbour.ghost_type or neighbour.type) or ""
+    if type == "gate" then return false end
+  end
+  return true
+end
+
 perel.on_event(perel.events.on_built, function (event)
   local source_entity = event.entity
   -- cache if wire connections are supported
@@ -19,7 +35,7 @@ perel.on_event(perel.events.on_built, function (event)
     storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.wire_connection_target_cache[source_entity.name] then
+  if storage.wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
@@ -72,7 +88,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
     storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.wire_connection_target_cache[source_entity.name] then
+  if storage.wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
@@ -151,7 +167,7 @@ perel.on_event("perel-build", function (event)
   end
 
   -- ensure the entity (if exist) supports the circuit network
-  if storage.wire_connection_target_cache[destination_prototype.name] then
+  if storage.wire_connection_target_cache[destination_prototype.name] and not invalid_wall(wire_destination) then
     local wire_source_data = storage.circuit_network_last_added[event.player_index]
     
     -- if the first entity selected, save it and return early
