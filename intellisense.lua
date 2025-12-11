@@ -1,4 +1,5 @@
 -- intellisense definitions for when the mod is unpacked
+---@meta
 
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@enum defines.events
