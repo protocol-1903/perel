@@ -40,28 +40,31 @@ perel.on_event(perel.events.on_built, function (event)
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
       local existing_connections = perel.event_categories.circuit_network and 0 or 3
-      -- for each connection
-      for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
-        -- ignore radar and script connections
-        if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
-          -- generate event data
-          event_data_set[#event_data_set+1] = {
-            player_index = event.player_index or nil,
-            tick = game.tick,
-            source = source_entity,
-            source_connector_id = wire_connector_id,
-            destination = wire_connection.target.owner,
-            destination_connector_id = wire_connection.target.wire_connector_id,
-            wire_type = wire_connection.wire_type,
-          }
-          
-          -- checking may not be required
-          if existing_connections < 2 then
-            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event
-              if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-                existing_connections = existing_connections + 1
+      local wire_connector = source_entity.get_wire_connector(wire_connector_id)
+      if wire_connector then
+        -- for each connection
+        for _, wire_connection in pairs(wire_connector.real_connections) do
+          -- ignore radar and script connections
+          if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+            -- generate event data
+            event_data_set[#event_data_set+1] = {
+              player_index = event.player_index or nil,
+              tick = game.tick,
+              source = source_entity,
+              source_connector_id = wire_connector_id,
+              destination = wire_connection.target.owner,
+              destination_connector_id = wire_connection.target.wire_connector_id,
+              wire_type = wire_connection.wire_type,
+            }
+            
+            -- checking may not be required
+            if existing_connections < 2 then
+              -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+              for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+                -- only count entities that are not script/radar connections and not the entity that caused this event
+                if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+                  existing_connections = existing_connections + 1
+                end
               end
             end
           end
@@ -93,29 +96,32 @@ perel.on_event(perel.events.on_destroyed, function (event)
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local event_data_set = {}
       local existing_connections = perel.event_categories.circuit_network and 0 or 3
-      -- for each connection
-      for _, wire_connection in pairs(source_entity.get_wire_connector(wire_connector_id, true).real_connections) do
-        -- ignore radar and script connections
-        if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
-          -- generate event data
-          event_data_set[#event_data_set+1] = {
-            player_index = event.player_index or nil,
-            tick = game.tick,
-            source = source_entity,
-            source_connector_id = wire_connector_id,
-            destination = wire_connection.target.owner,
-            destination_connector_id = wire_connection.target.wire_connector_id,
-            wire_type = wire_connection.wire_type,
-          }
-          
-          -- checking may not be required
-          if existing_connections < 2 then
-            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event
-              if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-                existing_connections = existing_connections + 1
-                break
+      local wire_connector = source_entity.get_wire_connector(wire_connector_id)
+      if wire_connector then
+        -- for each connection
+        for _, wire_connection in pairs(wire_connector.real_connections) do
+          -- ignore radar and script connections
+          if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+            -- generate event data
+            event_data_set[#event_data_set+1] = {
+              player_index = event.player_index or nil,
+              tick = game.tick,
+              source = source_entity,
+              source_connector_id = wire_connector_id,
+              destination = wire_connection.target.owner,
+              destination_connector_id = wire_connection.target.wire_connector_id,
+              wire_type = wire_connection.wire_type,
+            }
+            
+            -- checking may not be required
+            if existing_connections < 2 then
+              -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+              for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+                -- only count entities that are not script/radar connections and not the entity that caused this event
+                if sub_wire_connection.origin ~= defines.wire_origin.script and sub_wire_connection.origin ~= defines.wire_origin.radars and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+                  existing_connections = existing_connections + 1
+                  break
+                end
               end
             end
           end

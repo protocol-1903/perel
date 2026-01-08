@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.6
+Date: ????
+  Changes:
+    - Does not default to generating circuit connectors unless required. Should help increase performance as more things are done
+  Bugfixes:
+    - Fixed a crash when circuit connecters were invalid. Resolves https://github.com/protocol-1903/perel/issues/9
+---------------------------------------------------------------------------------------------------
 Version: 1.0.5
 Date: 2025-12-04
   Changes:
