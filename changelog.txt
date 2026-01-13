@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.6
-Date: ????
+Date: 2026-01-12
   Changes:
     - Does not default to generating circuit connectors unless required. Should help increase performance as more things are done
   Bugfixes:
