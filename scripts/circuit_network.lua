@@ -50,7 +50,7 @@ perel.on_event(perel.events.on_built, function (event)
     -- for each connection
     for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
       -- ignore radar and script connections
-      if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+      if wire_connection.origin == defines.wire_origin.player then
         -- generate event data
         solo_event_data[#solo_event_data+1] = {
           player_index = event.player_index or nil,
@@ -111,7 +111,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
     -- for each connection
     for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
       -- ignore radar and script connections
-      if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+      if wire_connection.origin == defines.wire_origin.player then
         -- generate event data
         solo_event_data[#solo_event_data+1] = {
           player_index = event.player_index or nil,
