@@ -250,5 +250,6 @@ perel.on_event("perel-build", function (event)
 end)
 
 perel.on_init(function()
-  storage.circuit_wire_connection_target_cache = {}
+  storage.circuit_wire_connection_target_cache = { ["entity-ghost"] = false } -- dynamically generated, cleared when mods change/update
+  storage.circuit_network_last_added = storage.circuit_network_last_added or {}
 end)
