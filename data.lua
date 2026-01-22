@@ -1,5 +1,3 @@
-PEREL = PEREL or {}
-
 -- utility prototypes
 data:extend{
   {

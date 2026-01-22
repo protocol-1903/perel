@@ -68,7 +68,7 @@ perel.on_event = function(event, handler)
     if not perel.event_handlers[event_id] then
       perel.event_handlers[event_id] = {}
       script.on_event(event_id, function(e)
-        for _, handler in pairs(perel.event_handlers[event_id]) do handler(e) end
+        for _, h in pairs(perel.event_handlers[event_id]) do h(e) end
       end)
     end
     table.insert(perel.event_handlers[event_id], handler)
@@ -111,5 +111,3 @@ perel.delayed_fire_event = function(event_name, event_data)
     script.raise_event(event_data.name, event_data)
   end
 end
-
-return perel

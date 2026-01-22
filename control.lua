@@ -1,4 +1,4 @@
-perel = require "__perel__.handlers"
+require "__perel__.handlers"
 
 perel.on_init(function()
   storage = {
@@ -28,7 +28,7 @@ perel.on_event(defines.events.on_object_destroyed, function (event)
   if not metadata or not metadata.event_name or not metadata.event_data then return end
   local event_name = metadata.event_name
   local event_data = metadata.event_data or {}
-  
+
   -- basic validation
   remove_invalid(event_data)
 
