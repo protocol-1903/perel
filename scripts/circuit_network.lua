@@ -46,58 +46,57 @@ perel.on_event(perel.events.on_built, function (event)
     storage.circuit_wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.circuit_wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
-    -- for each wire node option
-    for _, wire_connector_id in pairs(nodes(source_entity.type)) do
-      local solo_event_data = {} -- for each on_circuit_wire_added
-      local combined_event_data = { -- on_circuit_network_created, on_circuit_network_merged
-        player_index = event.player_index or nil,
-        tick = game.tick,
-        source = source_entity,
-        source_connector_id = wire_connector_id,
-        destinations = {},
-        wire_type = type_from_connector(wire_connector_id),
-      }
-      local existing = perel.event_categories.circuit_network and 0 or 3
-      local wire_connector = source_entity.get_wire_connector(wire_connector_id)
-      -- for each connection
-      for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
-        -- ignore radar and script connections
-        if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
-          -- generate event data
-          solo_event_data[#solo_event_data+1] = {
-            player_index = event.player_index or nil,
-            tick = game.tick,
-            source = source_entity,
-            source_connector_id = wire_connector_id,
-            destination = wire_connection.target.owner,
-            destination_connector_id = wire_connection.target.wire_connector_id,
-            wire_type = wire_connection.wire_type,
-          }
-          combined_event_data.destinations[#combined_event_data.destinations+1] = {
-            entity = wire_connection.target.owner,
-            connector_id = wire_connection.target.wire_connector_id
-          }
-          -- checking may not be required
-          if existing < 2 then
-            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event
-              if sub_wire_connection.origin == defines.wire_origin.player and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-                existing = existing + 1
-              end
+  if not storage.circuit_wire_connection_target_cache[source_entity.name] or invalid_wall(source_entity) then return end
+  -- for each wire node option
+  for _, wire_connector_id in pairs(nodes(source_entity.type)) do
+    local solo_event_data = {} -- for each on_circuit_wire_added
+    local combined_event_data = { -- on_circuit_network_created, on_circuit_network_merged
+      player_index = event.player_index or nil,
+      tick = game.tick,
+      source = source_entity,
+      source_connector_id = wire_connector_id,
+      destinations = {},
+      wire_type = type_from_connector(wire_connector_id),
+    }
+    local existing = perel.event_categories.circuit_network and 0 or 3
+    local wire_connector = source_entity.get_wire_connector(wire_connector_id)
+    -- for each connection
+    for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
+      -- ignore radar and script connections
+      if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+        -- generate event data
+        solo_event_data[#solo_event_data+1] = {
+          player_index = event.player_index or nil,
+          tick = game.tick,
+          source = source_entity,
+          source_connector_id = wire_connector_id,
+          destination = wire_connection.target.owner,
+          destination_connector_id = wire_connection.target.wire_connector_id,
+          wire_type = wire_connection.wire_type,
+        }
+        combined_event_data.destinations[#combined_event_data.destinations+1] = {
+          entity = wire_connection.target.owner,
+          connector_id = wire_connection.target.wire_connector_id
+        }
+        -- checking may not be required
+        if existing < 2 then
+          -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+          for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+            -- only count entities that are not script/radar connections and not the entity that caused this event
+            if sub_wire_connection.origin == defines.wire_origin.player and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+              existing = existing + 1
             end
           end
         end
       end
+    end
 
 
-      -- raise events, only fire combined event if destinations exist
-      combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
-      perel.delayed_fire_event(existing == 0 and "circuit_network_created" or existing == 2 and "circuit_network_merged" or nil, combined_event_data)
-      for _, event_data in pairs(solo_event_data) do
-        perel.delayed_fire_event("circuit_wire_added", event_data)
-      end
+    -- raise events, only fire combined event if destinations exist
+    combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
+    perel.delayed_fire_event(existing == 0 and "circuit_network_created" or existing == 2 and "circuit_network_merged" or nil, combined_event_data)
+    for _, event_data in pairs(solo_event_data) do
+      perel.delayed_fire_event("circuit_wire_added", event_data)
     end
   end
 end)
@@ -109,59 +108,58 @@ perel.on_event(perel.events.on_destroyed, function (event)
     storage.circuit_wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.circuit_wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
-    -- for each wire node option
-    for _, wire_connector_id in pairs(nodes(source_entity.type)) do
-      local solo_event_data = {} -- for each on_circuit_wire_removed
-      local combined_event_data = { -- on_circuit_network_destroyed, on_circuit_network_split
-        player_index = event.player_index or nil,
-        tick = game.tick,
-        source = source_entity,
-        source_connector_id = wire_connector_id,
-        destinations = {},
-        wire_type = type_from_connector(wire_connector_id)
-      }
-      local existing = perel.event_categories.circuit_network and 0 or 3
-      local wire_connector = source_entity.get_wire_connector(wire_connector_id)
-      -- for each connection
-      for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
-        -- ignore radar and script connections
-        if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
-          -- generate event data
-          solo_event_data[#solo_event_data+1] = {
-            player_index = event.player_index or nil,
-            tick = game.tick,
-            source = source_entity,
-            source_connector_id = wire_connector_id,
-            destination = wire_connection.target.owner,
-            destination_connector_id = wire_connection.target.wire_connector_id,
-            wire_type = wire_connection.wire_type,
-          }
-          combined_event_data.destinations[#combined_event_data.destinations+1] = {
-            entity = wire_connection.target.owner,
-            connector_id = wire_connection.target.wire_connector_id
-          }
+  if not storage.circuit_wire_connection_target_cache[source_entity.name] or invalid_wall(source_entity) then return end
+  -- for each wire node option
+  for _, wire_connector_id in pairs(nodes(source_entity.type)) do
+    local solo_event_data = {} -- for each on_circuit_wire_removed
+    local combined_event_data = { -- on_circuit_network_destroyed, on_circuit_network_split
+      player_index = event.player_index or nil,
+      tick = game.tick,
+      source = source_entity,
+      source_connector_id = wire_connector_id,
+      destinations = {},
+      wire_type = type_from_connector(wire_connector_id)
+    }
+    local existing = perel.event_categories.circuit_network and 0 or 3
+    local wire_connector = source_entity.get_wire_connector(wire_connector_id)
+    -- for each connection
+    for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
+      -- ignore radar and script connections
+      if wire_connection.origin ~= defines.wire_origin.script and wire_connection.origin ~= defines.wire_origin.radars then
+        -- generate event data
+        solo_event_data[#solo_event_data+1] = {
+          player_index = event.player_index or nil,
+          tick = game.tick,
+          source = source_entity,
+          source_connector_id = wire_connector_id,
+          destination = wire_connection.target.owner,
+          destination_connector_id = wire_connection.target.wire_connector_id,
+          wire_type = wire_connection.wire_type,
+        }
+        combined_event_data.destinations[#combined_event_data.destinations+1] = {
+          entity = wire_connection.target.owner,
+          connector_id = wire_connection.target.wire_connector_id
+        }
 
-          -- checking may not be required
-          if existing < 2 then
-            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event
-              if sub_wire_connection.origin == defines.wire_origin.player and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-                existing = existing + 1
-                break
-              end
+        -- checking may not be required
+        if existing < 2 then
+          -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
+          for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
+            -- only count entities that are not script/radar connections and not the entity that caused this event
+            if sub_wire_connection.origin == defines.wire_origin.player and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
+              existing = existing + 1
+              break
             end
           end
         end
       end
+    end
 
-      -- raise events, only fire combined event if destinations exist
-      combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
-      perel.delayed_fire_event(existing == 0 and "circuit_network_destroyed" or existing == 2 and "circuit_network_split" or nil, combined_event_data)
-      for _, event_data in pairs(solo_event_data) do
-        perel.delayed_fire_event("circuit_wire_removed", event_data)
-      end
+    -- raise events, only fire combined event if destinations exist
+    combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
+    perel.delayed_fire_event(existing == 0 and "circuit_network_destroyed" or existing == 2 and "circuit_network_split" or nil, combined_event_data)
+    for _, event_data in pairs(solo_event_data) do
+      perel.delayed_fire_event("circuit_wire_removed", event_data)
     end
   end
 end)
