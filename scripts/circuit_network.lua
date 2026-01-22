@@ -241,7 +241,6 @@ perel.on_event("perel-build", function (event)
     end
 
     -- raise events, only fire combined event if destinations exist
-    combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
     perel.delayed_fire_event(combined_event, combined_event_data)
     perel.delayed_fire_event(solo_event, solo_event_data)
 

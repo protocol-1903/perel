@@ -68,7 +68,7 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
         "electric_network_split"
       }
 
-      -- raise events, only fire combined event if destinations exist
+      -- raise events
       perel.delayed_fire_event(table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil, combined_event_data)
       for _, event_data in pairs(solo_event_data) do
         perel.delayed_fire_event(event_names[1], event_data)
@@ -191,12 +191,13 @@ perel.on_event("perel-build", function (event)
       end
     end
 
-    -- raise events, only fire combined event if destinations exist
-    combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
+    -- raise events
     perel.delayed_fire_event(combined_event, combined_event_data)
     perel.delayed_fire_event(solo_event, solo_event_data)
 
-    storage.electric_network_last_added[event.player_index] = solo_event == "electric_wire_added" and {
+    storage.electric_network_last_added[event.player_index] = solo_event == "electric_wire_added" and
+      (wire_source.type == "entity-ghost" and wire_source.ghost_type or wire_source.type) == "electric-pole" and
+      destination_prototype.type == "electric-pole" and {
       entity = wire_destination,
       connector_id = solo_event_data.destination_connector_id
     } or nil
