@@ -129,21 +129,57 @@ perel.on_event("perel-build", function (event)
   if storage.circuit_wire_connection_target_cache[destination_prototype.name] == nil then
     storage.circuit_wire_connection_target_cache[destination_prototype.name] = destination_prototype.get_max_circuit_wire_distance() ~= 0
   end
-
   -- ensure the entity (if exist) supports the circuit network
-  if storage.circuit_wire_connection_target_cache[destination_prototype.name] and not invalid_wall(wire_destination) then
-    local wire_source_data = storage.circuit_network_last_added[event.player_index]
+  if not storage.circuit_wire_connection_target_cache[destination_prototype.name] or invalid_wall(wire_destination) then return end
 
-    -- if the first entity selected, save it and return early
-    if not wire_source_data then
-      -- save data in variables for calculating combinator input/output selection
-      local cursor_pos = event.cursor_position
-      local destination_pos = wire_destination.position
-      local destination_dir = wire_destination.direction
+  local wire_source_data = storage.circuit_network_last_added[event.player_index]
 
-      storage.circuit_network_last_added[event.player_index] = {
-        entity = wire_destination,
-        connector_id = defines.wire_connector_id[(
+  -- if the first entity selected, save it and return early
+  if not wire_source_data then
+    -- save data in variables for calculating combinator input/output selection
+    local cursor_pos = event.cursor_position
+    local destination_pos = wire_destination.position
+    local destination_dir = wire_destination.direction
+
+    storage.circuit_network_last_added[event.player_index] = {
+      entity = wire_destination,
+      connector_id = defines.wire_connector_id[(
+        destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
+          "combinator_" .. (
+            ( -- check that we are selecting the input side of the combinator
+              destination_dir == 00 and cursor_pos.y > destination_pos.y or
+              destination_dir == 04 and cursor_pos.x < destination_pos.x or
+              destination_dir == 08 and cursor_pos.y < destination_pos.y or
+              destination_dir == 12 and cursor_pos.x > destination_pos.x
+            ) and "input_" or "output_"
+          )
+        ) or "circuit_"
+      ) .. player.cursor_stack.name:sub(1,-6)]
+    }
+    return
+  end
+
+  local wire_source = wire_source_data.entity
+
+  -- if last entity added to wire can reach (and not same entity), then run network creation logic
+  if wire_destination.unit_number ~= wire_source.unit_number and wire_destination.can_wires_reach(wire_source) then
+
+    -- note that the wire has not actually been added yet, so this is the pre-event state
+
+    -- save data in variables for calculating combinator input/output selection
+    local cursor_pos = event.cursor_position
+    local destination_pos = wire_destination.position
+    local destination_dir = wire_destination.direction
+
+    -- precalculate event data for later use and firing
+    local solo_event_data = {
+      player_index = event.player_index,
+      tick = game.tick,
+      source = wire_source,
+      source_connector_id = wire_source_data.connector_id,
+      destination = wire_destination,
+      destination_connector_id = defines.wire_connector_id[
+        (
           destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
             "combinator_" .. (
               ( -- check that we are selecting the input side of the combinator
@@ -154,97 +190,60 @@ perel.on_event("perel-build", function (event)
               ) and "input_" or "output_"
             )
           ) or "circuit_"
-        ) .. player.cursor_stack.name:sub(1,-6)]
-      }
-      return
-    end
+        ) .. player.cursor_stack.name:sub(1,-6)
+      ],
+      wire_type = type_from_connector(wire_source_data.connector_id),
+    }
+    local combined_event_data = {
+      player_index = event.player_index,
+      tick = game.tick,
+      source = wire_source,
+      source_connector_id = wire_source_data.connector_id,
+      destinations = {
+        {
+          entity = wire_destination,
+          connector_id = solo_event_data.destination_connector_id -- aint gonna do that shit again
+        }
+      },
+      wire_type = type_from_connector(wire_source_data.connector_id),
+    }
 
-    local wire_source = wire_source_data.entity
+    local source_connector = wire_source.get_wire_connector(solo_event_data.source_connector_id, true)
+    local destination_connector = wire_destination.get_wire_connector(solo_event_data.destination_connector_id, true)
 
-    -- if last entity added to wire can reach (and not same entity), then run network creation logic
-    if wire_destination.unit_number ~= wire_source.unit_number and wire_destination.can_wires_reach(wire_source) then
+    local solo_event, combined_event = source_connector.is_connected_to(destination_connector) and "circuit_wire_removed" or "circuit_wire_added"
 
-      -- note that the wire has not actually been added yet, so this is the pre-event state
+    if perel.event_categories.circuit_network then
+      -- temporarily disconnect
+      if solo_event == "circuit_wire_removed" then
+        source_connector.disconnect_from(destination_connector)
+      end
+      local s_id = source_connector.network_id
+      local d_id = destination_connector.network_id
 
-      -- save data in variables for calculating combinator input/output selection
-      local cursor_pos = event.cursor_position
-      local destination_pos = wire_destination.position
-      local destination_dir = wire_destination.direction
-
-      -- precalculate event data for later use and firing
-      local solo_event_data = {
-        player_index = event.player_index,
-        tick = game.tick,
-        source = wire_source,
-        source_connector_id = wire_source_data.connector_id,
-        destination = wire_destination,
-        destination_connector_id = defines.wire_connector_id[
-          (
-            destination_prototype.active_energy_usage and destination_prototype.type ~= "rocket-silo" and (
-              "combinator_" .. (
-                ( -- check that we are selecting the input side of the combinator
-                  destination_dir == 00 and cursor_pos.y > destination_pos.y or
-                  destination_dir == 04 and cursor_pos.x < destination_pos.x or
-                  destination_dir == 08 and cursor_pos.y < destination_pos.y or
-                  destination_dir == 12 and cursor_pos.x > destination_pos.x
-                ) and "input_" or "output_"
-              )
-            ) or "circuit_"
-          ) .. player.cursor_stack.name:sub(1,-6)
-        ],
-        wire_type = type_from_connector(wire_source_data.connector_id),
-      }
-      local combined_event_data = {
-        player_index = event.player_index,
-        tick = game.tick,
-        source = wire_source,
-        source_connector_id = wire_source_data.connector_id,
-        destinations = {
-          {
-            entity = wire_destination,
-            connector_id = solo_event_data.destination_connector_id -- aint gonna do that shit again
-          }
-        },
-        wire_type = type_from_connector(wire_source_data.connector_id),
-      }
-
-      local source_connector = wire_source.get_wire_connector(solo_event_data.source_connector_id, true)
-      local destination_connector = wire_destination.get_wire_connector(solo_event_data.destination_connector_id, true)
-
-      local solo_event, combined_event = source_connector.is_connected_to(destination_connector) and "circuit_wire_removed" or "circuit_wire_added"
-
-      if perel.event_categories.circuit_network then
-        -- temporarily disconnect
-        if solo_event == "circuit_wire_removed" then
-          source_connector.disconnect_from(destination_connector)
-        end
-        local s_id = source_connector.network_id
-        local d_id = destination_connector.network_id
-
-        if s_id == d_id and s_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
-          -- both zero (nonexistant) networks so network created/destroyed
-          combined_event = solo_event == "circuit_wire_added" and "circuit_network_created" or "circuit_network_destroyed"
-        elseif s_id ~= d_id and s_id ~= 0 and d_id ~= 0 then
-          -- both nonzero (existing) networks that are different, so network merged/split
-          combined_event = solo_event == "circuit_wire_added" and "circuit_network_merged" or "circuit_network_split"
-        end
-
-        -- reconnect entities
-        if solo_event == "circuit_wire_removed" then
-          source_connector.connect_to(destination_connector)
-        end
+      if s_id == d_id and s_id == 0 and wire_source.type ~= "entity-ghost" and wire_destination.type ~= "entity-ghost" then
+        -- both zero (nonexistant) networks so network created/destroyed
+        combined_event = solo_event == "circuit_wire_added" and "circuit_network_created" or "circuit_network_destroyed"
+      elseif s_id ~= d_id and s_id ~= 0 and d_id ~= 0 then
+        -- both nonzero (existing) networks that are different, so network merged/split
+        combined_event = solo_event == "circuit_wire_added" and "circuit_network_merged" or "circuit_network_split"
       end
 
-      -- raise events, only fire combined event if destinations exist
-      combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
-      perel.delayed_fire_event(combined_event, combined_event_data)
-      perel.delayed_fire_event(solo_event, solo_event_data)
-
-      storage.circuit_network_last_added[event.player_index] = solo_event == "circuit_wire_added" and {
-        entity = wire_destination,
-        connector_id = solo_event_data.destination_connector_id
-      } or nil
+      -- reconnect entities
+      if solo_event == "circuit_wire_removed" then
+        source_connector.connect_to(destination_connector)
+      end
     end
+
+    -- raise events, only fire combined event if destinations exist
+    combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
+    perel.delayed_fire_event(combined_event, combined_event_data)
+    perel.delayed_fire_event(solo_event, solo_event_data)
+
+    storage.circuit_network_last_added[event.player_index] = solo_event == "circuit_wire_added" and {
+      entity = wire_destination,
+      connector_id = solo_event_data.destination_connector_id
+    } or nil
   end
 end)
 
