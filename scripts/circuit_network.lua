@@ -1,17 +1,5 @@
 if not perel.event_categories.circuit_wire and not perel.event_categories.circuit_network then return end
 
-local function nodes(type)
-  return (type == "decider-combinator" or type == "arithmetic-combinator" or type == "selector-combinator") and {
-    defines.wire_connector_id.combinator_input_red,
-    defines.wire_connector_id.combinator_input_green,
-    defines.wire_connector_id.combinator_output_red,
-    defines.wire_connector_id.combinator_output_green
-  } or {
-    defines.wire_connector_id.circuit_red,
-    defines.wire_connector_id.circuit_green
-  }
-end
-
 ---@param entity LuaEntity
 ---@return boolean
 local function invalid_wall(entity)
@@ -48,7 +36,7 @@ perel.on_event(perel.events.on_built, function (event)
   -- ignore ghosts and make sure it supports circuit wires
   if not storage.circuit_wire_connection_target_cache[source_entity.name] or invalid_wall(source_entity) then return end
   -- for each wire node option
-  for _, wire_connector_id in pairs(nodes(source_entity.type)) do
+  for wire_connector_id, wire_connector in pairs(source_entity.get_wire_connectors() or {}) do
     local solo_event_data = {} -- for each on_circuit_wire_added
     local combined_event_data = { -- on_circuit_network_created, on_circuit_network_merged
       player_index = event.player_index or nil,
@@ -59,7 +47,6 @@ perel.on_event(perel.events.on_built, function (event)
       wire_type = type_from_connector(wire_connector_id),
     }
     local existing = perel.event_categories.circuit_network and 0 or 3
-    local wire_connector = source_entity.get_wire_connector(wire_connector_id)
     -- for each connection
     for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
       -- ignore radar and script connections
@@ -110,7 +97,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
   -- ignore ghosts and make sure it supports circuit wires
   if not storage.circuit_wire_connection_target_cache[source_entity.name] or invalid_wall(source_entity) then return end
   -- for each wire node option
-  for _, wire_connector_id in pairs(nodes(source_entity.type)) do
+  for wire_connector_id, wire_connector in pairs(source_entity.get_wire_connectors()) do
     local solo_event_data = {} -- for each on_circuit_wire_removed
     local combined_event_data = { -- on_circuit_network_destroyed, on_circuit_network_split
       player_index = event.player_index or nil,
@@ -121,7 +108,6 @@ perel.on_event(perel.events.on_destroyed, function (event)
       wire_type = type_from_connector(wire_connector_id)
     }
     local existing = perel.event_categories.circuit_network and 0 or 3
-    local wire_connector = source_entity.get_wire_connector(wire_connector_id)
     -- for each connection
     for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
       -- ignore radar and script connections
