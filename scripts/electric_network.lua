@@ -55,7 +55,7 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
 
       -- reconnect
       for _, wire_connection in pairs(connections) do
-        wire_connector.connect_to(wire_connection.target)
+        wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
       local event_names = (event.name == 6 or event.name == 18 or event.name == 78 or event.name == 92 or event.name == 94) and {
@@ -187,7 +187,7 @@ perel.on_event("perel-build", function (event)
 
       -- reconnect entities
       if solo_event == "electric_wire_removed" then
-        source_connector.connect_to(destination_connector)
+        source_connector.connect_to(destination_connector, false)
       end
     end
 
