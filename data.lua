@@ -8,6 +8,12 @@ data:extend{
   },
   {
     type = "custom-input",
+    name = "perel-build-shift",
+    linked_game_control = "build-ghost",
+    key_sequence = ""
+  },
+  {
+    type = "custom-input",
     name = "perel-pipette",
     linked_game_control = "pipette",
     key_sequence = ""
@@ -68,6 +74,22 @@ data:extend{
 
 -- electric network event handlers
 data:extend{
+  {
+    type = "custom-event",
+    name = "on_pre_electric_wire_added"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_wire_added"
+  },
+  {
+    type = "custom-event",
+    name = "on_pre_electric_wire_removed"
+  },
+  {
+    type = "custom-event",
+    name = "on_electric_wire_removed"
+  },
   {
     type = "custom-event",
     name = "on_pre_electric_network_created"

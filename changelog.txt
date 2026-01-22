@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.7
 Date: ????
+  Features:
+    - Added electric network events, exactly the same as circuit network events
   Changes:
     - All events will be enabled when LUA Event Trace is loaded
     - [BREAKING] multi-target events (circuit network merged, circuit network created, circuit network split, circuit network destroyed) will be fired as a single event instead of individual events. See documentation for details

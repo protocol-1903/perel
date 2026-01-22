@@ -1,15 +1,14 @@
-require "__perel__.handlers"
+require "handlers"
 
 perel.on_init(function()
   _G.storage = {
     grandfather = storage.grandfather or game.create_inventory(1),
-    event_deathrattles = storage.event_deathrattles or {},
-    circuit_network_last_added = storage.circuit_network_last_added or {},
-    wire_connection_target_cache = { ["entity-ghost"] = false } -- dynamically generated, cleared when mods change/update
+    event_deathrattles = storage.event_deathrattles or {}
   }
 end)
 
-require "__perel__.scripts.circuit_network"
+require "scripts.circuit_network"
+require "scripts.electric_network"
 
 local function remove_invalid(tables)
   for index, value in pairs(tables) do

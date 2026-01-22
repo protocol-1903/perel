@@ -105,6 +105,7 @@ end)
 if not perel.event_categories.circuit_wire then return end
 
 -- remove monitor, if no longer holding a wire
+---@param event EventData.on_player_cursor_stack_changed
 perel.on_event(defines.events.on_player_cursor_stack_changed, function (event)
   local player = game.get_player(event.player_index)
   local item = player.cursor_stack
@@ -114,10 +115,12 @@ perel.on_event(defines.events.on_player_cursor_stack_changed, function (event)
 end)
 
 -- you can't pipette a wire so just nil out regardless
+---@param event EventData.CustomInputEvent
 perel.on_event("perel-pipette", function (event)
   storage.circuit_network_last_added[event.player_index] = nil
 end)
 
+---@param event EventData.CustomInputEvent
 perel.on_event("perel-build", function (event)
   local player = game.get_player(event.player_index)
 
