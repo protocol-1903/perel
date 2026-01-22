@@ -64,21 +64,25 @@ perel.event_categories.electric_network =
 
 -- save event for later when registered
 perel.on_event = function(event, handler)
-  for _, event_id in pairs(type(event) == "table" and event or {event}) do
-    if not perel.event_handlers[event_id] then
-      perel.event_handlers[event_id] = {}
-      script.on_event(event_id, function(e)
-        for _, h in pairs(perel.event_handlers[event_id]) do h(e) end
+  if type(event) == "table" then
+    for _, event_id in pairs(event) do
+      perel.on_event(event_id, handler)
+    end
+  elseif event then
+    if not perel.event_handlers[event] then
+      perel.event_handlers[event] = {}
+      script.on_event(event, function(e)
+        for _, handle in pairs(perel.event_handlers[event]) do handle(e) end
       end)
     end
-    table.insert(perel.event_handlers[event_id], handler)
+    perel.event_handlers[event][#perel.event_handlers[event]+1] = handler
   end
 end
 
 -- same for init and config changed, merged for ease of use
 perel.event_handlers.on_init = {}
 perel.on_init = function(handler)
-  table.insert(perel.event_handlers.on_init, handler)
+  perel.event_handlers.on_init[#perel.event_handlers.on_init+1] = handler
 end
 script.on_init(function(e)
   for _, handler in pairs(perel.event_handlers.on_init) do handler(e) end
