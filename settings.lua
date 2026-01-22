@@ -42,5 +42,5 @@ data:extend{{
   name = "perel-enable-all-events",
   hidden = true,
   default_value = false,
-  forced_value = false
+  forced_value = not not mods["0-event-trace"] -- turns all events on when event trace enabled
 }}
