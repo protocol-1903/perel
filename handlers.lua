@@ -99,7 +99,8 @@ end
 
 -- fires on_pre_ events and delays full event triggering, if enabled
 perel.delayed_fire_event = function(event_name, event_data)
-  if event_name and event_data and perel.enabled_events[event_name] then
+  if not event_name or not event_data then return end
+  if perel.enabled_events[event_name] then
     storage.event_deathrattles[perel.tock()] = {
       event_name = event_name,
       event_data = event_data
