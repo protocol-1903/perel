@@ -42,11 +42,11 @@ end
 perel.on_event(perel.events.on_built, function (event)
   local source_entity = event.entity
   -- cache if wire connections are supported
-  if storage.wire_connection_target_cache[source_entity.name] == nil then
-    storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
+  if storage.circuit_wire_connection_target_cache[source_entity.name] == nil then
+    storage.circuit_wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
+  if storage.circuit_wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local solo_event_data = {} -- for each on_circuit_wire_added
@@ -105,11 +105,11 @@ end)
 perel.on_event(perel.events.on_destroyed, function (event)
   local source_entity = event.entity
   -- cache if wire connections are supported
-  if storage.wire_connection_target_cache[source_entity.name] == nil then
-    storage.wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
+  if storage.circuit_wire_connection_target_cache[source_entity.name] == nil then
+    storage.circuit_wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
   end
   -- ignore ghosts and make sure it supports circuit wires
-  if storage.wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
+  if storage.circuit_wire_connection_target_cache[source_entity.name] and not invalid_wall(source_entity) then
     -- for each wire node option
     for _, wire_connector_id in pairs(nodes(source_entity.type)) do
       local solo_event_data = {} -- for each on_circuit_wire_removed
@@ -193,12 +193,12 @@ perel.on_event("perel-build", function (event)
   local destination_prototype = wire_destination.name == "entity-ghost" and wire_destination.ghost_prototype or wire_destination.prototype
 
   -- cache if wire connections are supported
-  if storage.wire_connection_target_cache[destination_prototype.name] == nil then
-    storage.wire_connection_target_cache[destination_prototype.name] = destination_prototype.get_max_circuit_wire_distance() ~= 0
+  if storage.circuit_wire_connection_target_cache[destination_prototype.name] == nil then
+    storage.circuit_wire_connection_target_cache[destination_prototype.name] = destination_prototype.get_max_circuit_wire_distance() ~= 0
   end
 
   -- ensure the entity (if exist) supports the circuit network
-  if storage.wire_connection_target_cache[destination_prototype.name] and not invalid_wall(wire_destination) then
+  if storage.circuit_wire_connection_target_cache[destination_prototype.name] and not invalid_wall(wire_destination) then
     local wire_source_data = storage.circuit_network_last_added[event.player_index]
 
     -- if the first entity selected, save it and return early
@@ -313,4 +313,8 @@ perel.on_event("perel-build", function (event)
       } or nil
     end
   end
+end)
+
+perel.on_init(function()
+  storage.circuit_wire_connection_target_cache = {}
 end)

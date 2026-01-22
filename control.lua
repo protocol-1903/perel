@@ -1,7 +1,7 @@
 require "__perel__.handlers"
 
 perel.on_init(function()
-  storage = {
+  _G.storage = {
     grandfather = storage.grandfather or game.create_inventory(1),
     event_deathrattles = storage.event_deathrattles or {},
     circuit_network_last_added = storage.circuit_network_last_added or {},
