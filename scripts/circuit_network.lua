@@ -1,5 +1,14 @@
 if not perel.event_categories.circuit_wire and not perel.event_categories.circuit_network then return end
 
+local function valid_wire_target(entity)
+  -- cache if circuit wire connections are supported
+  if storage.circuit_wire_connection_target_cache[entity] == nil then
+    storage.circuit_wire_connection_target_cache[entity] = prototypes.entity[entity].get_max_circuit_wire_distance() ~= 0
+  end
+  -- make sure it supports circuit wires
+  return storage.circuit_wire_connection_target_cache[entity]
+end
+
 ---@param entity LuaEntity
 ---@return boolean
 local function invalid_wall(entity)
@@ -30,17 +39,14 @@ end
 ---@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_space_platform_built_entity|EventData.script_raised_built|EventData.script_raised_revive|EventData.on_player_mined_entity|EventData.on_robot_mined_entity|EventData.on_space_platform_mined_entity|EventData.script_raised_destroy|EventData.on_entity_died
 perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (event)
   local source_entity = event.entity
-  -- cache if wire connections are supported
-  if storage.circuit_wire_connection_target_cache[source_entity.name] == nil then
-    storage.circuit_wire_connection_target_cache[source_entity.name] = source_entity.prototype.get_max_circuit_wire_distance() ~= 0
-  end
-  -- ignore ghosts and make sure it supports circuit wires
-  if not storage.circuit_wire_connection_target_cache[source_entity.name] or invalid_wall(source_entity) then return end
+  -- make sure it supports circuit wires and is a valid wall, ignore ghosts
+  if not valid_wire_target(source_entity.name) or invalid_wall(source_entity) then return end
   -- for each wire node option
   for wire_connector_id, wire_connector in pairs(source_entity.get_wire_connectors() or {}) do
-    if wire_connector_id < 5 then -- ignore copper wires
-      local solo_event_data = {} -- for each on_circuit_wire_added
-      local combined_event_data = { -- on_circuit_network_created, on_circuit_network_merged
+    if wire_connector and wire_connector_id < 5 then -- ignore copper wires
+      local networks = perel.event_categories.electric_network and {} or nil
+      local solo_event_data = {} -- for each on_circuit_wire_added/removed
+      local combined_event_data = { -- on_circuit_network_created/destroyed, on_circuit_network_merged/split
         player_index = event.player_index or nil,
         tick = game.tick,
         source = source_entity,
@@ -48,9 +54,12 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
         destinations = {},
         wire_type = type_from_connector(wire_connector_id),
       }
-      local existing = perel.event_categories.circuit_network and 0 or 3
+      -- stash connections
+      local connections = wire_connector.real_connections
+      -- temp disconnect
+      wire_connector.disconnect_all()
       -- for each connection
-      for _, wire_connection in pairs(wire_connector and wire_connector.real_connections or {}) do
+      for _, wire_connection in pairs(connections) do
         -- ignore radar and script connections
         if wire_connection.origin == defines.wire_origin.player then
           -- generate event data
@@ -68,17 +77,15 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
             connector_id = wire_connection.target.wire_connector_id
           }
           -- checking may not be required
-          if existing < 2 then
-            -- check for existing connections to other entities to determine if network_created or network_merged events should be fired
-            for _, sub_wire_connection in pairs(wire_connection.target.real_connections) do
-              -- only count entities that are not script/radar connections and not the entity that caused this event
-              if sub_wire_connection.origin == defines.wire_origin.player and sub_wire_connection.target.owner.unit_number ~= source_entity.unit_number then
-                existing = existing + 1
-                break
-              end
-            end
+          if networks and table_size(networks) < 2 then
+            networks[wire_connection.target.network_id] = true
           end
         end
+      end
+
+      -- reconnect
+      for _, wire_connection in pairs(connections) do
+        wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
       local event_names = (event.name == 6 or event.name == 18 or event.name == 78 or event.name == 92 or event.name == 94) and {
@@ -93,9 +100,90 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
 
       -- raise events, only fire combined event if destinations exist
       combined_event_data = #combined_event_data.destinations > 0 and combined_event_data or nil
-      perel.delayed_fire_event(existing == 0 and event_names[2] or existing == 2 and event_names[3] or nil, combined_event_data)
+      perel.delayed_fire_event(table_size(networks) == 0 and event_names[2] or table_size(networks) == 2 and event_names[3] or nil, combined_event_data)
       for _, event_data in pairs(solo_event_data) do
         perel.delayed_fire_event(event_names[1], event_data)
+      end
+    end
+  end
+end)
+
+-- special handling for when a ghost pole is destroyed and connects adjacent unconnected networks
+---@param event EventData.on_pre_ghost_deconstructed
+perel.on_event(defines.events.on_pre_ghost_deconstructed, function (event)
+  local entity = event.ghost
+  if entity.ghost_type ~= "electric-pole" then return end
+end)
+
+-- special handling for when shift clicking a pole to disconnect neighbours
+---@param event EventData.CustomInputEvent
+perel.on_event("perel-build-shift", function (event)
+  local player = game.get_player(event.player_index)
+
+  -- only check if the player is not holding anything or the item does not have a place result and does not have a tile result
+  local item = player.cursor_ghost and player.cursor_ghost.name or
+    player.cursor_stack and player.cursor_stack.valid_for_read and player.cursor_stack.prototype or nil
+  if item and (item.place_result or item.place_as_tile_result) then return end
+
+  local entity = player.selected
+  if not entity or not entity.valid then return end
+
+  -- make sure it supports circuit wires wires
+  if (entity.type == "entity-ghost" and entity.ghost_type or entity.type) ~= "electric-pole" or
+    not valid_wire_target(entity.name == "entity-ghost" and entity.ghost_name or entity.name) then return end
+
+  for wire_connector_id, wire_connector in pairs(entity.get_wire_connectors()) do
+    if wire_connector_id < 5 then -- ignore copper wires
+      -- cache connections
+      local connections = wire_connector.connections
+
+      -- disconnect from all
+      wire_connector.disconnect_all()
+
+      -- check networks, cache changes
+      local networks = perel.event_categories.circuit_network and {} or nil
+      local solo_event_data = {} -- for each on_circuit_wire_removed
+      local combined_event_data = { -- on_circuit_network_destroyed, on_circuit_network_split
+        player_index = event.player_index or nil,
+        tick = game.tick,
+        source = entity,
+        source_connector_id = defines.wire_connector_id.pole_copper,
+        destinations = {},
+        wire_type = type_from_connector(wire_connector_id),
+      }
+
+      for _, wire_connection in pairs(connections) do
+        -- ignore radar and script connections
+        if wire_connection.origin == defines.wire_origin.player then
+          -- generate event data
+          solo_event_data[#solo_event_data+1] = {
+            player_index = event.player_index or nil,
+            tick = game.tick,
+            source = entity,
+            source_connector_id = defines.wire_connector_id.pole_copper,
+            destination = wire_connection.target.owner,
+            destination_connector_id = wire_connection.target.wire_connector_id,
+            wire_type = wire_connection.wire_type,
+          }
+          if wire_connection.target.owner.type ~= "entity-ghost" then
+            combined_event_data.destinations[#combined_event_data.destinations+1] = {
+              entity = wire_connection.target.owner,
+              connector_id = wire_connection.target.wire_connector_id ---------------------- TODO: function (possibly generic) for counting networks and getting data from destinations, i do this too many times
+            }
+          end
+        end
+      end
+
+      -- reconnect
+      for _, wire_connection in pairs(connections) do
+        wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
+      end
+
+      -- raise events, only fire 'split' event if destinations found and this entity is not a ghost
+      combined_event_data = entity.type ~= "entity-ghost" and #combined_event_data.destinations > 0 and combined_event_data or nil
+      perel.delayed_fire_event(table_size(networks) == 0 and "circuit_network_destroyed" or table_size(networks) == 2 and "circuit_network_split" or nil, combined_event_data)
+      for _, event_data in pairs(solo_event_data) do
+        perel.delayed_fire_event("circuit_wire_removed", event_data)
       end
     end
   end
@@ -129,13 +217,8 @@ perel.on_event("perel-build", function (event)
 
   local wire_destination = player.selected
   local destination_prototype = wire_destination.name == "entity-ghost" and wire_destination.ghost_prototype or wire_destination.prototype
-
-  -- cache if wire connections are supported
-  if storage.circuit_wire_connection_target_cache[destination_prototype.name] == nil then
-    storage.circuit_wire_connection_target_cache[destination_prototype.name] = destination_prototype.get_max_circuit_wire_distance() ~= 0
-  end
-  -- ensure the entity (if exist) supports the circuit network
-  if not storage.circuit_wire_connection_target_cache[destination_prototype.name] or invalid_wall(wire_destination) then return end
+  -- make sure it supports circuit wires and is a valid wall
+  if not valid_wire_target(destination_prototype.name) or invalid_wall(wire_destination) then return end
 
   local wire_source_data = storage.circuit_network_last_added[event.player_index]
 
