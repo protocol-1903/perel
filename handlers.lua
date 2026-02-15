@@ -110,7 +110,7 @@ perel.delayed_fire_event = function(event_name, event_data)
       event_data = event_data
     }
   end
-
+  
   if perel.enabled_events["pre_" .. event_name] then
     event_data.name = defines.events["on_pre_" .. event_name]
     script.raise_event(event_data.name, event_data)
