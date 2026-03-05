@@ -62,6 +62,9 @@ perel.event_categories.electric_network =
   perel.enabled_events.pre_electric_network_split or
   perel.enabled_events.electric_network_split
 
+-- per-event special handlers ran before the event is sent
+perel.handlers = {}
+
 -- save event for later when registered
 perel.on_event = function(event, handler)
   if type(event) == "table" then
@@ -102,7 +105,10 @@ perel.tock = function()
 end
 
 -- fires on_pre_ events and delays full event triggering, if enabled
-perel.delayed_fire_event = function(event_name, event_data)
+---@param event_name string
+---@param event_data EventData
+---@param skip_pre_fire_event? boolean
+perel.delayed_fire_event = function(event_name, event_data, skip_pre_fire_event)
   if not event_name or not event_data then return end
   if perel.enabled_events[event_name] then
     storage.event_deathrattles[perel.tock()] = {
@@ -111,7 +117,7 @@ perel.delayed_fire_event = function(event_name, event_data)
     }
   end
 
-  if perel.enabled_events["pre_" .. event_name] then
+  if not skip_pre_fire_event and perel.enabled_events["pre_" .. event_name] then
     event_data.name = defines.events["on_pre_" .. event_name]
     script.raise_event(event_data.name, event_data)
   end

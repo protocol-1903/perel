@@ -9,8 +9,8 @@ local function valid_wire_target(entity)
   return storage.wire_connection_target_cache[entity]
 end
 
----@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_space_platform_built_entity|EventData.script_raised_built|EventData.script_raised_revive|EventData.on_player_mined_entity|EventData.on_robot_mined_entity|EventData.on_space_platform_mined_entity|EventData.script_raised_destroy|EventData.on_entity_died
-perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (event)
+---@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_space_platform_built_entity|EventData.script_raised_built|EventData.script_raised_revive
+perel.on_event(perel.events.on_built, function (event)
   local source_entity = event.entity
   -- make sure it supports copper wires, only check electric poles and power switches
   if (source_entity.type ~= "electric-pole" and source_entity.type ~= "power-switch") or not valid_wire_target(source_entity.name) then return end
@@ -58,18 +58,17 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
         wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
-      local event_names = (event.name == 6 or event.name == 18 or event.name == 78 or event.name == 92 or event.name == 94) and {
+      local event_names = {
         "electric_wire_added",
         "electric_network_created",
         "electric_network_merged"
-      } or {
-        "electric_wire_removed",
-        "electric_network_destroyed",
-        "electric_network_split"
       }
 
       -- raise events
-      perel.delayed_fire_event(table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil, combined_event_data)
+      perel.delayed_fire_event(
+        table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil,
+        combined_event_data
+      )
       for _, event_data in pairs(solo_event_data) do
         perel.delayed_fire_event(event_names[1], event_data)
       end
@@ -77,12 +76,81 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
   end
 end)
 
--- special handling for when a ghost pole is destroyed and connects adjacent unconnected networks UGH WHY DOES THIS EXIST
--- oh and it also applies for power switches
+---@param event EventData.on_player_mined_entity|EventData.on_robot_mined_entity|EventData.on_space_platform_mined_entity|EventData.script_raised_destroy|EventData.on_entity_died
+perel.on_event(perel.events.on_destroyed, function (event)
+  local source_entity = event.entity
+  -- make sure it supports copper wires, only check electric poles and power switches
+  if (source_entity.type ~= "electric-pole" and source_entity.type ~= "power-switch") or not valid_wire_target(source_entity.name) then return end
+  -- for each wire node option
+  for wire_connector_id, wire_connector in pairs(source_entity.get_wire_connectors() or {}) do
+    if wire_connector and wire_connector_id >= 5 then -- ignore circuit wires
+      local networks = perel.event_categories.electric_network and {} or nil
+      local solo_event_data = {} -- for each on_electric_wire_added
+      local combined_event_data = { -- on_electric_network_created, on_electric_network_merged
+        player_index = event.player_index or nil,
+        tick = event.tick,
+        source = source_entity,
+        source_connector_id = wire_connector_id,
+        destinations = {}
+      }
+      -- stash connections
+      local connections = wire_connector.real_connections
+      -- temp disconnect
+      wire_connector.disconnect_all()
+      -- for each connection
+      for _, wire_connection in pairs(connections) do
+        -- ignore radar and script connections
+        if wire_connection.origin == defines.wire_origin.player then
+          -- generate event data
+          solo_event_data[#solo_event_data+1] = {
+            player_index = event.player_index or nil,
+            tick = event.tick,
+            source = source_entity,
+            source_connector_id = wire_connector_id,
+            destination = wire_connection.target.owner,
+            destination_connector_id = wire_connection.target.wire_connector_id
+          }
+          combined_event_data.destinations[#combined_event_data.destinations+1] = {
+            entity = wire_connection.target.owner,
+            connector_id = wire_connection.target.wire_connector_id
+          }
+          if networks and table_size(networks) < 2 then
+            networks[wire_connection.target.network_id] = true
+          end
+        end
+      end
+
+      -- reconnect
+      for _, wire_connection in pairs(connections) do
+        wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
+      end
+
+      local event_names = {
+        "electric_wire_removed",
+        "electric_network_destroyed",
+        "electric_network_split"
+      }
+
+      -- raise events
+      perel.delayed_fire_event(
+        table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil,
+        combined_event_data,
+        source_entity.type == "electric-pole" -- do not prefire event if this is an electric pole
+      )
+
+      for _, event_data in pairs(solo_event_data) do
+        perel.delayed_fire_event(event_names[1], event_data)
+      end
+    end
+  end
+end)
+
+-- special handling for when a pole is destroyed and connects adjacent unconnected networks UGH WHY DOES THIS EXIST
+-- oh and it also applies for power switches as targets
 ---@param event EventData.on_pre_ghost_deconstructed
 perel.on_event(defines.events.on_pre_ghost_deconstructed, function (event)
   local entity = event.ghost
-  if entity.ghost_type ~= "electric-pole" and entity.ghost_name ~= "power-switch" then return end
+  if entity.ghost_type ~= "electric-pole" then return end
 end)
 
 -- special handling for when shift clicking a pole to disconnect neighbours
@@ -271,6 +339,24 @@ perel.on_event("perel-build", function (event)
     } or nil
   end
 end)
+
+-- special handling for the edge case that the network is not split when a power pole is deconstructed
+---@param event EventData.on_electric_network_split
+---@return boolean
+perel.handlers.electric_network_split = function (event)
+  local network
+  for _, destination in pairs(event.destinations) do
+    local e = destination.entity
+    if e.valid then
+      local wire_connector = e.get_wire_connector(destination.connector_id)
+      if network and network ~= wire_connector.network_id then
+        return true -- networks split, fire event
+      end
+      network = wire_connector.network_id
+    end
+  end
+  return false -- networks did not split, no entities are valid/all entities are of the same network
+end
 
 perel.on_init(function()
   storage.wire_connection_target_cache = { ["entity-ghost"] = false } -- dynamically generated, cleared when mods change/update

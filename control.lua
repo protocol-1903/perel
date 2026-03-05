@@ -31,7 +31,10 @@ perel.on_event(defines.events.on_object_destroyed, function (event)
   -- basic validation
   remove_invalid(event_data)
 
-  if perel.enabled_events[event_name] then
+  -- if special handling for this event, run it
+  local fire = perel.handlers[event_name] and perel.handlers[event_name](event_data) or not perel.handlers[event_name]
+
+  if fire and perel.enabled_events[event_name] then
     event_data.name = defines.events["on_" .. event_name]
     script.raise_event(event_data.name, event_data)
   end

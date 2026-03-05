@@ -5,9 +5,13 @@ Date: ????
     - Added electric network events, exactly the same as circuit network events
     - Added edge case support for circuit network events when an electric pole is shift clicked to remove connections
   Changes:
+    - Added optional handling for events specific to each event
     - All events will be enabled when LUA Event Trace is loaded
     - [BREAKING] multi-target events (circuit network merged, circuit network created, circuit network split, circuit network destroyed) will be fired as a single event instead of individual events. See documentation for details
+    - [BREAKING] electric poles being destroyed will no longer fire on_pre_circuit_network_split because i cannot replicate the vanilla connection logic, related to bugfix mentioned below
     - Optimized circuit network event firing to decrease API calls and fewer loop traversals
+  Bugfixes:
+    - Fixed that removing an electric pole would fire on_circuit_network_split even if the wires merged after it was removed due to vanilla behaviour
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.6
 Date: 2026-01-12
