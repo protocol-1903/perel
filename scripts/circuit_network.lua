@@ -239,9 +239,12 @@ perel.on_event("perel-build-shift", function (event)
             wire_type = wire_connection.wire_type,
           }
           if wire_connection.target.owner.type ~= "entity-ghost" then
+            if wire_connection.target.network_id ~= 0 then
+              networks[wire_connection.target.network_id] = true
+            end
             combined_event_data.destinations[#combined_event_data.destinations+1] = {
               entity = wire_connection.target.owner,
-              connector_id = wire_connection.target.wire_connector_id ---------------------- TODO: function (possibly generic) for counting networks and getting data from destinations, i do this too many times
+              connector_id = wire_connection.target.wire_connector_id
             }
           end
         end
