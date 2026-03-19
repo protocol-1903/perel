@@ -32,4 +32,5 @@ WARNING: CERTAIN DESTRUCTION EVENTS MAY RETURN INVALID ENTITIES
 A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
 A note about scripts(opt-in): If a script does something silently (i.e. by not using raise_event inside the api call) this mod will not be capable of detecting it. If you need 100% precision, I recommend using a script trigger place event on the prototype definition instead!
 
+My mods are made 100% by humans, with no computer generated code or graphics.
 If you have a mod idea, let me know and I can look into it.
