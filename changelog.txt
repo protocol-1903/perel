@@ -4,6 +4,10 @@ Date: ????
   Features:
     - Added electric network events, exactly the same as circuit network events
     - Added edge case support for circuit network events when an electric pole is shift clicked to remove connections
+    - Added general use utility functions for scripts
+    - Added functions to find the most recent ocurrance of an entity in a LuaUndoRedoStack
+    - Added a function to get fluidbox connected neighbours of an entity
+    - Added a function to get a bitmask from pipe connections
   Changes:
     - Added optional handling for events specific to each event
     - All events will be enabled when LUA Event Trace is loaded
