@@ -66,7 +66,7 @@ perel.on_event(perel.events.on_built, function (event)
 
       -- raise events
       perel.delayed_fire_event(
-        table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil,
+        networks and (table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3]) or nil,
         combined_event_data
       )
       for _, event_data in pairs(solo_event_data) do
@@ -133,7 +133,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
 
       -- raise events
       perel.delayed_fire_event(
-        table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3] or nil,
+        networks and (table_size(networks) == 0 and source_entity.type == "electric-pole" and event_names[2] or table_size(networks) == 2 and event_names[3]) or nil,
         combined_event_data,
         source_entity.type == "electric-pole" -- do not prefire event if this is an electric pole
       )
