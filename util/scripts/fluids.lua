@@ -1,4 +1,4 @@
-_G.perel = perel or {}
+require "__perel__.util.scripts.general"
 
 --- returns any fluidbox connected neighbours. by default only includes normal connections
 ---@param entity LuaEntity 
