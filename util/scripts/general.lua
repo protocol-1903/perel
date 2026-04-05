@@ -5,10 +5,11 @@ _G.perel = perel or {}
 ---@param entity LuaEntity
 ---@return uint32? action_index
 perel.find_build_action = function(actions, entity)
+  local name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
   for a, action in pairs(actions) do
     if action.type == "built-entity" and
       action.surface_index == entity.surface_index and
-      action.target.name == entity.name and
+      action.target.name == name and
       action.target.position.x == entity.position.x and
       action.target.position.y == entity.position.y then
       return a
