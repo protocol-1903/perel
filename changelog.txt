@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
-Date: ????
+Date: 2026-04-04
   Features:
     - Added electric network events, exactly the same as circuit network events
     - Added edge case support for circuit network events when an electric pole is shift clicked to remove connections
