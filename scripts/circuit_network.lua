@@ -54,6 +54,7 @@ perel.on_event(perel.events.on_built, function (event)
         wire_type = type_from_connector(wire_connector_id),
       }
       -- stash connections
+      local all_connections = wire_connector.connections
       local connections = wire_connector.real_connections
       -- temp disconnect
       wire_connector.disconnect_all()
@@ -83,7 +84,7 @@ perel.on_event(perel.events.on_built, function (event)
       end
 
       -- reconnect
-      for _, wire_connection in pairs(connections) do
+      for _, wire_connection in pairs(all_connections) do
         wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
@@ -125,6 +126,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
         wire_type = type_from_connector(wire_connector_id),
       }
       -- stash connections
+      local all_connections = wire_connector.connections
       local connections = wire_connector.real_connections
       -- temp disconnect
       wire_connector.disconnect_all()
@@ -154,7 +156,7 @@ perel.on_event(perel.events.on_destroyed, function (event)
       end
 
       -- reconnect
-      for _, wire_connection in pairs(connections) do
+      for _, wire_connection in pairs(all_connections) do
         wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
@@ -207,8 +209,9 @@ perel.on_event("perel-build-shift", function (event)
 
   for wire_connector_id, wire_connector in pairs(entity.get_wire_connectors()) do
     if wire_connector_id < 5 then -- ignore copper wires
-      -- cache connections
-      local connections = wire_connector.connections
+      -- stash connections
+      local all_connections = wire_connector.connections
+      local connections = wire_connector.real_connections
 
       -- disconnect from all
       wire_connector.disconnect_all()
@@ -251,7 +254,7 @@ perel.on_event("perel-build-shift", function (event)
       end
 
       -- reconnect
-      for _, wire_connection in pairs(connections) do
+      for _, wire_connection in pairs(all_connections) do
         wire_connector.connect_to(wire_connection.target, false, wire_connection.origin)
       end
 
