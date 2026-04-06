@@ -6,8 +6,7 @@ require "__perel__.util.scripts.general"
 ---@return LuaEntity[] neighbours
 perel.get_fluidbox_neighoburs = function(entity, include_undergrounds)
   local neighbours = {}
-  local prototype = entity.type == "entity-ghost" and entity.ghost_prototype or entity.prototype
-  for i = 1, #prototype.fluidbox_prototypes do
+  for i = 1, #entity.fluidbox do
     for _, pipe_connection in pairs(entity.fluidbox.get_pipe_connections(i)) do
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or pipe_connection.connection_type == "normal") then
         neighbours[#neighbours+1] = pipe_connection.target.owner
