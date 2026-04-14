@@ -104,6 +104,26 @@ perel.tock = function()
   return num
 end
 
+perel.remove_invalid = function(table)
+  for index, value in pairs(table) do
+    if type(value) == "userdata" and value.valid == false then
+      table[index] = nil
+    elseif type(value) == "table" then -- table of data, check individually
+      perel.remove_invalid(value)
+    end
+  end
+end
+
+-- immediately fires event, if enabled
+---@param event_name string
+---@param event_data EventData
+perel.fire_event = function(event_name, event_data)
+  if not event_name or not event_data then return end
+  if not perel.enabled_events[event_name] then return end
+  event_data.name = defines.events["on_" .. event_name]
+  script.raise_event(event_data.name, event_data)
+end
+
 -- fires on_pre_ events and delays full event triggering, if enabled
 ---@param event_name string
 ---@param event_data EventData
@@ -121,4 +141,55 @@ perel.delayed_fire_event = function(event_name, event_data, skip_pre_fire_event)
     event_data.name = defines.events["on_pre_" .. event_name]
     script.raise_event(event_data.name, event_data)
   end
+end
+
+-- generic post event subtick handler via deathrattles
+perel.on_event(defines.events.on_object_destroyed, function (event)
+  local metadata = storage.event_deathrattles[event.registration_number]
+  storage.event_deathrattles[event.registration_number] = nil
+
+  if not metadata or not metadata.event_name or not metadata.event_data then return end
+
+  local event_name = metadata.event_name
+  local event_data = metadata.event_data
+  -- sanitize
+  perel.remove_invalid(event_data)
+  -- if special handling for this event, run it
+  if perel.handlers[event_name] and perel.handlers[event_name](event_data) or not perel.handlers[event_name] then
+    perel.fire_event(event_name, event_data)
+  end
+end)
+
+---Appends the tag to the specified table
+---@param ghost LuaEntity
+---@param table string
+---@param tag any
+---@param key? string optional key instead of appending
+perel.insert_tag = function(ghost, table, tag, key)
+  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
+  local tags = ghost.tags or {}
+  tags.perel = tags.perel or {}
+  tags.perel[table] = tags.perel[table] or {}
+  tags.perel[table][key or #tags.perel[table]+1] = tag
+  ghost.tags = tags
+end
+
+---Sets the specified key to the tag
+---@param ghost LuaEntity
+---@param key string
+---@param tag any
+perel.set_tag = function(ghost, key, tag)
+  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
+  local tags = ghost.tags or {}
+  tags.perel = tags.perel or {}
+  tags.perel[key] = tag
+  ghost.tags = tags
+end
+
+---Gets a tag from the entity
+---@param ghost LuaEntity
+---@param key string
+---@return any tag nil if not ghost or no tags
+perel.get_tag = function(ghost, key)
+  return ghost and ghost.valid and ghost.type == "entity-ghost" and ghost.tags and ghost.tags.perel and ghost.tags.perel[key] or nil
 end
