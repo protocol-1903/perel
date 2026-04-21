@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.5
+Date: 2026-04-21
+  Features:
+    - Added perel.get_entity_connection_categories
+    - Added perel.get_possible_fluidbox_neighbours
+---------------------------------------------------------------------------------------------------
 Version: 1.1.4
 Date: 2026-04-14
   Features:
