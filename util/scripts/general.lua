@@ -10,8 +10,10 @@ perel.find_build_action = function(actions, entity)
     if action.type == "built-entity" and
       action.surface_index == entity.surface_index and
       action.target.name == name and
+      action.target.quality == entity.quality and
       action.target.position.x == entity.position.x and
-      action.target.position.y == entity.position.y then
+      action.target.position.y == entity.position.y and
+      action.target.direction == entity.direction then
       return a
     end
   end
