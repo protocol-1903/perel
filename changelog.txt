@@ -1,6 +1,14 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.6
 Date: ???
+  Features:
+    - Added perel.get_fluidbox_neighoburs_by_fluidbox_and_connection
+    - Added perel.get_fluidbox_targets
+    - Added perel.get_fluidbox_targets_by_fluidbox_and_connection
+    - Added perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection
+  Changes:
+    - Added optional `include_linked` flag to methods that support `include_undergrounds`
+    - Updated annotations to use dictionary references where possible
   Bugfixes:
     - Fixed perel.find_build_action not respecting entity direction or quality
 ---------------------------------------------------------------------------------------------------

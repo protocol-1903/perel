@@ -1,6 +1,6 @@
 {
   "name": "perel",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "title": "Protocol's Extended Runtime Event Library",
   "description": "A custom collection of runtime utilities and events for more refined control of the Factorio engine via scripting.",
   "author": "protocol_1903",
