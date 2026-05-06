@@ -29,7 +29,7 @@ local mult_lookup = {
 }
 
 ---Parses an integer number into W
----@param power any
+---@param power int
 ---@return data.Energy
 perel.calculate_power = function(power)
   local exp = ("%e"):format(power)
@@ -46,6 +46,13 @@ perel.parse_power = function(power)
   return (mult and power:sub(1, -3) or power:sub(1, -2)) *
     (power:sub(-1) == "J" and 60 or 1) *
     10 ^ (mult_lookup.str2int[mult] or 0)
+end
+
+perel.calculate_si = function(number)
+  local exp = ("%e"):format(number)
+  local mult = tonumber(exp:sub(-1))
+  local pow = tonumber(exp:sub(1, -5)) * (10 ^ (mult % 3))
+  return (mult >= 3 and "%.1f %s" or "%.2f %s"):format(pow, mult_lookup.int2str[(mult - mult % 3) / 3])
 end
 
 return perel
