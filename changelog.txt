@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.6
-Date: ???
+Date: 2026-05-06
   Features:
     - Added perel.get_fluidbox_neighoburs_by_fluidbox_and_connection
     - Added perel.get_fluidbox_targets
