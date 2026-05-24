@@ -105,6 +105,11 @@ perel.get_entity_connection_categories = function(prototype)
   return perel.entity_connection_categories[prototype.name]
 end
 
+-- local override for categories. does not effect other mods
+perel.set_entity_connection_categories = function(name, categories)
+  perel.entity_connection_categories[name] = categories
+end
+
 --- returns the neighbours that might connect to the entity's fluidboxes.
 --- may return duplicate entries if an entity collides with multiple pipe connection targets
 ---@param entity LuaEntity

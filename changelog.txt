@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.8
+Date: 2026-05-23
+  Features:
+    - Added perel.set_entity_connection_categories to override the local copy of conneciton categories per entity
+---------------------------------------------------------------------------------------------------
 Version: 1.1.7
 Date: 2026-05-06
   Features:
