@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.9
+Date: 2026-05-26
+  Bugfixes:
+    - Fixed that perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection() would only return a single possible neighbour per connection instead of all possibles
+---------------------------------------------------------------------------------------------------
 Version: 1.1.8
 Date: 2026-05-23
   Features:

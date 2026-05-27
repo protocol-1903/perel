@@ -74,7 +74,7 @@ end
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
----@return LuaEntity[] neighbours
+---@return uint mask
 perel.get_pipe_connection_bitmask = function(entity, include_undergrounds, include_linked)
   local mask = 0
   for _, neighbour in pairs(perel.get_fluidbox_neighoburs(entity, include_undergrounds, include_linked)) do
@@ -153,14 +153,15 @@ perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection = function(ent
     neighbours[i] = {}
     for j, pipe_connection in pairs(entity.fluidbox.get_pipe_connections(i)) do
       if pipe_connection.target then
-        neighbours[i][j] = pipe_connection.target.owner
+        neighbours[i][j] = {pipe_connection.target.owner}
       elseif not pipe_connection.target then
+        neighbours[i][j] = {}
         for _, e in pairs(entity.surface.find_entities_filtered{
           position = pipe_connection.target_position
         }) do
           for category in pairs(perel.get_entity_connection_categories(e.type == "entity-ghost" and e.ghost_prototype or e.prototype)) do
             if categories[category] then
-              neighbours[i][j] = e
+              neighbours[i][j][#neighbours[i][j]+1] = e
               break
             end
           end
