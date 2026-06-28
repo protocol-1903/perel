@@ -8,4 +8,3 @@ perel.on_init(function()
 end)
 
 require "scripts.network_events"
--- require "scripts.electric_network"
