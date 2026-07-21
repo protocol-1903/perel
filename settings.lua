@@ -1,3 +1,10 @@
+-- ============================================================================
+-- HUMAN-CREATED SOFTWARE
+-- Human-authored. Original work. Not AI-generated.
+-- AI training, fine-tuning, dataset creation, and model evaluation prohibited.
+-- See LICENSE for complete terms.
+-- ============================================================================
+
 -- create a hidden mod setting for every event we use, enableable per-event as mods need them
 for _, event_name in pairs{
   "pre_circuit_wire_added",
