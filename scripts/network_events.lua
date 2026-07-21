@@ -327,7 +327,7 @@ perel.handlers.electric_network_split = function (event)
   local network
   for _, destination in pairs(event.destinations) do
     local e = destination.entity
-    if e.valid then
+    if e and e.valid then
       local wire_connector = e.get_wire_connector(destination.connector_id)
       if network and network ~= wire_connector.network_id then
         return true -- networks split, fire event
@@ -345,7 +345,7 @@ perel.handlers.circuit_network_split = function (event)
   local network
   for _, destination in pairs(event.destinations) do
     local e = destination.entity
-    if e.valid then
+    if e and e.valid then
       local wire_connector = e.get_wire_connector(destination.connector_id)
       if network and network ~= wire_connector.network_id then
         return true -- networks split, fire event

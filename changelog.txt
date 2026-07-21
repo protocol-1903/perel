@@ -3,6 +3,8 @@ Version: 1.2.1
 Date: ????
   Changes:
     - Added human-created software disclaimer to lua file headers
+  Bugfixes:
+    - Fixed a crash when splitting networks by deleting entities. Resolves https://github.com/protocol-1903/perel/issues/14
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
 Date: 2026-06-27
