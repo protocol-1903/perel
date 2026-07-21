@@ -412,10 +412,10 @@ perel.on_event("perel-build", function (event)
   local wire_source_data = storage[type .. "_network_last_added"][event.player_index] or {}
   local wire_source = wire_source_data.entity
 
-  -- if the first entity selected (or previously invalid), save it and return early
-  if not wire_source or not wire_source.valid then
+  -- if the first entity selected (or previously invalid [or different surfaces]), save it and return early
+  if not wire_source or not wire_source.valid or wire_source.surface_index ~= wire_desitnation.surface_index then
     perel.insert_tag(wire_destination, type .. "_network_last_added", true, event.player_index)
-    storage[---@diagnostic disable-next-line: missing-fields
+    storage[
       type .. "_network_last_added"][event.player_index] = {
         entity = wire_destination,
         connector_id = get_wire_connector_id(wire_destination, event.cursor_position, wire_types[player.cursor_stack.name])
@@ -497,7 +497,7 @@ perel.on_event("perel-build", function (event)
       storage[type .. "_network_last_added"][event.player_index] = nil
       perel.insert_tag(wire_destination, type .. "_network_last_added", nil, event.player_index)
     else
-      storage[---@diagnostic disable-next-line: missing-fields
+      storage[
         type .. "_network_last_added"][event.player_index] = {
           entity = wire_destination,
           connector_id = solo_event_data.destination_connector_id
