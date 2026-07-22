@@ -2,6 +2,10 @@
 
 # Just another library mod with some custom runtime events
 
+**WARNING**: CERTAIN DESTRUCTIVE EVENTS MAY NOT RETURN ENTITIES: invalid entities cannot be contained in raised script events so they are culled before the event is raised
+
+**WARNING**: PEREL CURRENTLY EDITS WIRES IN UNFORTUNATE WAYS: the UndoRedoStack may not contain valid references to edited wires, if this becomes an issue please let me know
+
 Includes intellisense integration if the mod file is unzipped in the working directory
 
 `on_circuit_wire_added`, `on_circuit_wire_removed`, `on_circuit_network_created`, `on_circuit_network_destroyed`, `on_circuit_network_merged`, `on_circuit_network_split`: (`pre_` circuit events are also supported)
@@ -26,8 +30,6 @@ Explicit support definitions (what events trigger what):
 `on_circuit_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
 `on_pre_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
 `on_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
-
-WARNING: CERTAIN DESTRUCTION EVENTS MAY RETURN INVALID ENTITIES
 
 A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
 A note about scripts(opt-in): If a script does something silently (i.e. by not using raise_event inside the api call) this mod will not be capable of detecting it. If you need 100% precision, I recommend using a script trigger place event on the prototype definition instead!
