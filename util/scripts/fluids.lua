@@ -14,7 +14,7 @@ require "__perel__.util.scripts.general"
 ---@return LuaEntity[] neighbours
 perel.get_fluidbox_neighoburs = function(entity, include_undergrounds, include_linked)
   local neighbours = {}
-  for i = 1, #entity.fluids_count do
+  for i = 1, entity.fluids_count do
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -32,7 +32,7 @@ end
 ---@return LuaEntity[][] neighbours
 perel.get_fluidbox_neighoburs_by_fluidbox_and_connection = function(entity, include_undergrounds, include_linked)
   local neighbours = {}
-  for i = 1, #entity.fluids_count do
+  for i = 1, entity.fluids_count do
     neighbours[i] = {}
     for j, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
@@ -51,7 +51,7 @@ end
 ---@return PipeConnection[] fluidbox_targets
 perel.get_fluidbox_targets = function(entity, include_undergrounds, include_linked)
   local fluidbox_targets = {}
-  for i = 1, #entity.fluids_count do
+  for i = 1, entity.fluids_count do
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -69,7 +69,7 @@ end
 ---@return PipeConnection[][] fluidbox_targets
 perel.get_fluidbox_targets_by_fluidbox_and_connection = function(entity, include_undergrounds, include_linked)
   local fluidbox_targets = {}
-  for i = 1, #entity.fluids_count do
+  for i = 1, entity.fluids_count do
     fluidbox_targets[i] = {}
     for j, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
@@ -130,7 +130,7 @@ perel.get_possible_fluidbox_neighbours = function(entity, categories)
   local neighbours = {}
   categories = categories or perel.get_entity_connection_categories(entity.type == "entity-ghost" and entity.ghost_prototype or entity.prototype)
   if not next(categories) then return {} end
-  for i = 1, #entity.fluids_count do
+  for i = 1, entity.fluids_count do
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and pipe_connection.connection_type == "normal" then
