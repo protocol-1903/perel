@@ -5,7 +5,11 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
-_G.perel = perel or {}
+---@class (partial) PEREL
+---@field calculate_power fun(power: number): data.Energy Parses a number into Watts. May lose precision of lower digits
+---@field parse_power fun(power: data.Energy): number Parses Joules or Watts into a number
+---@field parse_si fun(number: number): string Parses the SI representation of a number
+perel = perel or {}
 
 local mult_lookup = {
   int2str = {
@@ -35,8 +39,8 @@ local mult_lookup = {
   }
 }
 
----Parses an integer number into W
----@param power int
+---Parses a number into Watts. May lose precision of lower digits
+---@param power number
 ---@return data.Energy
 perel.calculate_power = function(power)
   local exp = ("%e"):format(power)
@@ -45,9 +49,9 @@ perel.calculate_power = function(power)
   return (pow >= 100 and "%d %sW" or "%.1f %sW"):format(pow, mult_lookup.int2str[(mult - mult % 3) / 3])
 end
 
----Parses J or W into an integer number
+---Parses Joules or Watts into a number
 ---@param power data.Energy
----@return int
+---@return number
 perel.parse_power = function(power)
   local mult = not tonumber(power:sub(1, -2)) and power:sub(-2, -2) or nil
   return (mult and power:sub(1, -3) or power:sub(1, -2)) *
@@ -55,7 +59,10 @@ perel.parse_power = function(power)
     10 ^ (mult_lookup.str2int[mult] or 0)
 end
 
-perel.calculate_si = function(number)
+---Parses the SI representation of a number
+---@param number number
+---@return string
+perel.parse_si = function(number)
   local exp = ("%e"):format(number)
   local mult = tonumber(exp:sub(-1))
   local pow = tonumber(exp:sub(1, -5)) * (10 ^ (mult % 3))

@@ -7,7 +7,7 @@
 
 assert(prototypes.item.coin, "ERROR: item 'coin' not found!")
 
-_G.perel = perel or {}
+perel = perel or {}
 
 perel.events = {}
 perel.events.on_built = {

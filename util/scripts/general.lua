@@ -5,7 +5,12 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
-_G.perel = perel or {}
+---@class (partial) PEREL
+---@field find_build_action fun(actions: UndoRedoAction[], entity: LuaEntity): uint32? Returns the undo action associated with this entity
+---@field find_build_item fun(stack: LuaUndoRedoStack, entity: LuaEntity): [uint32?, uint32?] Returns the undo item and action associated with this entity
+---@field get_side_length fun(prototype: LuaEntityPrototype): double Returns the longest edge of the bounding box, or the length of a side for a square entity
+---@field get_direction fun(a: MapPosition, b: MapPosition): defines.direction Returns the direction from a to b, assuming the two are in a straight line
+perel = perel or {}
 
 ---Returns the undo action associated with this entity
 ---@param actions UndoRedoAction[]
@@ -38,7 +43,7 @@ perel.find_build_item = function(stack, entity)
   end
 end
 
--- returns the longest edge of the bounding box, or the length of a side for a square entity
+---Returns the longest edge of the bounding box, or the length of a side for a square entity
 ---@param prototype LuaEntityPrototype
 ---@return double size
 perel.get_side_length = function(prototype)
@@ -47,10 +52,11 @@ perel.get_side_length = function(prototype)
   return dx > dy and dx or dy
 end
 
---- returns the direction from a to b, assuming the two are in a straight line
+---Returns the direction from a to b, assuming the two are in a straight line
 ---@param a MapPosition
 ---@param b MapPosition
 ---@return defines.direction
 perel.get_direction = function(a, b)
+  ---@diagnostic disable-next-line: return-type-mismatch
   return math.abs(a.x - b.x) > math.abs(a.y - b.y) and (a.x < b.x and 4 or 12) or (a.y < b.y and 8 or 0)
 end

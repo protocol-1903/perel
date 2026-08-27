@@ -5,9 +5,20 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
-require "__perel__.util.scripts.general"
+---@class (partial) PEREL
+---@field get_fluidbox_neighoburs fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[] Returns any fluidbox connected neighbours. by default only includes normal connections
+---@field get_fluidbox_neighoburs_by_fluidbox_and_connection fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[][] Returns any fluidbox connected neighbours, indexed by fluidbox and connection id. by default only includes normal connections
+---@field get_fluidbox_targets fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): PipeConnection[] Returns any fluidbox targets. by default only includes normal connections
+---@field get_fluidbox_targets_by_fluidbox_and_connection fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): PipeConnection[][] Returns any fluidbox targets, indexed by fluidbox and connection id. by default only includes normal connections
+---@field get_pipe_connection_bitmask fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): uint Returns the bitmask that represents the fluid connections of this entity. only includes connections that are valid and in use. may return nonsensical values when used on entities that do not have pipe-like connections
+---@field entity_connection_categories {[string]: {[string]: true}} Stores all of the normal connection categories found on an entity as a boolean dictionary. Lazy loaded as required
+---@field get_entity_connection_categories fun(entity: LuaEntityPrototype): {[string]: true?} Returns the connection category dictionary for an entity, and creates it if it don't already exist
+---@field set_entity_connection_categories fun(name: string, categories: {[string]: true?}) Local override for categories. does not effect other mods
+---@field get_possible_fluidbox_neighbours fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[] Returns the neighbours that might connect to the entity's fluidboxes. may return duplicate entries if an entity collides with multiple pipe connection targets
+---@field get_possible_fluidbox_neighbours_by_fluidbox_and_connection fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[][] Returns the neighbours that might connect to the entity's fluidboxes, indexed by fluidbox and connection id. may return duplicate entries if an entity collides with multiple pipe connection targets
+perel = perel or {}
 
---- returns any fluidbox connected neighbours. by default only includes normal connections
+---Returns any fluidbox connected neighbours. by default only includes normal connections
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
@@ -15,6 +26,7 @@ require "__perel__.util.scripts.general"
 perel.get_fluidbox_neighoburs = function(entity, include_undergrounds, include_linked)
   local neighbours = {}
   for i = 1, entity.fluids_count do
+    ---@diagnostic disable-next-line: param-type-mismatch
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -25,7 +37,7 @@ perel.get_fluidbox_neighoburs = function(entity, include_undergrounds, include_l
   return neighbours
 end
 
---- returns any fluidbox connected neighbours, indexed by fluidbox and connection id. by default only includes normal connections
+---Returns any fluidbox connected neighbours, indexed by fluidbox and connection id. by default only includes normal connections
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
@@ -34,6 +46,7 @@ perel.get_fluidbox_neighoburs_by_fluidbox_and_connection = function(entity, incl
   local neighbours = {}
   for i = 1, entity.fluids_count do
     neighbours[i] = {}
+    ---@diagnostic disable-next-line: param-type-mismatch
     for j, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -44,7 +57,7 @@ perel.get_fluidbox_neighoburs_by_fluidbox_and_connection = function(entity, incl
   return neighbours
 end
 
---- returns any fluidbox targets. by default only includes normal connections
+---Returns any fluidbox targets. by default only includes normal connections
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
@@ -52,6 +65,7 @@ end
 perel.get_fluidbox_targets = function(entity, include_undergrounds, include_linked)
   local fluidbox_targets = {}
   for i = 1, entity.fluids_count do
+    ---@diagnostic disable-next-line: param-type-mismatch
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -62,7 +76,7 @@ perel.get_fluidbox_targets = function(entity, include_undergrounds, include_link
   return fluidbox_targets
 end
 
---- returns any fluidbox targets. by default only includes normal connections
+---Returns any fluidbox targets, indexed by fluidbox and connection id. by default only includes normal connections
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
@@ -71,6 +85,7 @@ perel.get_fluidbox_targets_by_fluidbox_and_connection = function(entity, include
   local fluidbox_targets = {}
   for i = 1, entity.fluids_count do
     fluidbox_targets[i] = {}
+    ---@diagnostic disable-next-line: param-type-mismatch
     for j, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and (include_undergrounds and pipe_connection.connection_type ~= "linked" or include_linked and pipe_connection.connection_type ~= "underground" or pipe_connection.connection_type == "normal") then
@@ -81,7 +96,7 @@ perel.get_fluidbox_targets_by_fluidbox_and_connection = function(entity, include
   return fluidbox_targets
 end
 
---- returns the bitmask that represents the fluid connections of this entity. only includes connections that are valid and in use. may return nonsensical values when used on entities that do not have pipe-like connections
+---Returns the bitmask that represents the fluid connections of this entity. only includes connections that are valid and in use. may return nonsensical values when used on entities that do not have pipe-like connections
 ---@param entity LuaEntity 
 ---@param include_undergrounds? boolean whether or not to include underground connections, default false
 ---@param include_linked? boolean whether or not to include linked connections, default false
@@ -89,18 +104,18 @@ end
 perel.get_pipe_connection_bitmask = function(entity, include_undergrounds, include_linked)
   local mask = 0
   for _, neighbour in pairs(perel.get_fluidbox_neighoburs(entity, include_undergrounds, include_linked)) do
+    ---@diagnostic disable-next-line: assign-type-mismatch
     mask = mask + 2 ^ (perel.get_direction(entity.position, neighbour.position) / 4)
   end
   return mask
 end
 
---- stores all of the normal connection categories found on an entity as a boolean dictionary. lazy loaded as required
----@type {[string]: {[string]: true}}
+---Stores all of the normal connection categories found on an entity as a boolean dictionary. Lazy loaded as required
 perel.entity_connection_categories = {}
 
---- returns the connection category dictionary for an entity, and creates it if it don't already exist
+---Returns the connection category dictionary for an entity, and creates it if it don't already exist
 ---@param prototype LuaEntityPrototype
----@return {[string]: true}
+---@return {[string]: true?}
 perel.get_entity_connection_categories = function(prototype)
   if perel.entity_connection_categories[prototype.name] then return perel.entity_connection_categories[prototype.name] end
   perel.entity_connection_categories[prototype.name] = {}
@@ -116,21 +131,24 @@ perel.get_entity_connection_categories = function(prototype)
   return perel.entity_connection_categories[prototype.name]
 end
 
--- local override for categories. does not effect other mods
+---Local override for categories. does not effect other mods
+---@param name string
+---@param categories {[string]: true?}
 perel.set_entity_connection_categories = function(name, categories)
   perel.entity_connection_categories[name] = categories
 end
 
---- returns the neighbours that might connect to the entity's fluidboxes.
---- may return duplicate entries if an entity collides with multiple pipe connection targets
+---Returns the neighbours that might connect to the entity's fluidboxes. may return duplicate entries if an entity collides with multiple pipe connection targets
 ---@param entity LuaEntity
 ---@param categories? {[string]: true}
 ---@return LuaEntity[] neighbours
 perel.get_possible_fluidbox_neighbours = function(entity, categories)
   local neighbours = {}
+  ---@diagnostic disable-next-line: param-type-mismatch
   categories = categories or perel.get_entity_connection_categories(entity.type == "entity-ghost" and entity.ghost_prototype or entity.prototype)
   if not next(categories) then return {} end
   for i = 1, entity.fluids_count do
+    ---@diagnostic disable-next-line: param-type-mismatch
     for _, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
       ---@cast pipe_connection PipeConnection
       if pipe_connection.target and pipe_connection.connection_type == "normal" then
@@ -139,6 +157,7 @@ perel.get_possible_fluidbox_neighbours = function(entity, categories)
         for _, e in pairs(entity.surface.find_entities_filtered{
           position = pipe_connection.target_position
         }) do
+          ---@diagnostic disable-next-line: param-type-mismatch
           for category in pairs(perel.get_entity_connection_categories(e.type == "entity-ghost" and e.ghost_prototype or e.prototype)) do
             if categories[category] then
               neighbours[#neighbours+1] = e
@@ -152,25 +171,28 @@ perel.get_possible_fluidbox_neighbours = function(entity, categories)
   return neighbours
 end
 
---- returns the neighbours that might connect to the entity's fluidboxes, indexed by fluidbox and connection id
---- may return duplicate entries if an entity collides with multiple pipe connection targets
+---Returns the neighbours that might connect to the entity's fluidboxes, indexed by fluidbox and connection id. may return duplicate entries if an entity collides with multiple pipe connection targets
 ---@param entity LuaEntity
 ---@param categories? {[string]: true}
 ---@return LuaEntity[][] neighbours
 perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection = function(entity, categories)
   local neighbours = {}
+  ---@diagnostic disable-next-line: param-type-mismatch
   categories = categories or perel.get_entity_connection_categories(entity.type == "entity-ghost" and entity.ghost_prototype or entity.prototype)
   if not next(categories) then return {} end
-  for i = 1, #entity.fluidbox do
+  for i = 1, entity.fluids_count do
     neighbours[i] = {}
-    for j, pipe_connection in pairs(entity.fluidbox.get_pipe_connections(i)) do
+    ---@diagnostic disable-next-line: param-type-mismatch
+    for j, pipe_connection in pairs(entity.get_fluid_box_pipe_connections(i)) do
+      ---@cast pipe_connection PipeConnection
       if pipe_connection.target then
-        neighbours[i][j] = {pipe_connection.target.owner}
+        neighbours[i][j] = {pipe_connection.target}
       elseif not pipe_connection.target then
         neighbours[i][j] = {}
         for _, e in pairs(entity.surface.find_entities_filtered{
           position = pipe_connection.target_position
-        }) do
+          }) do
+          ---@diagnostic disable-next-line: param-type-mismatch
           for category in pairs(perel.get_entity_connection_categories(e.type == "entity-ghost" and e.ghost_prototype or e.prototype)) do
             if categories[category] then
               neighbours[i][j][#neighbours[i][j]+1] = e
