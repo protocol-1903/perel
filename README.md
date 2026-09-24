@@ -17,6 +17,15 @@ Includes intellisense integration if the mod file is unzipped in the working dir
     - `defines.wire_connector_id` destination_connector_id: The destination connector of the wire connection.
     - `defines.wire_type` wire_type: The wire type of the connection.
 
+`on_electric_wire_added`, `on_electric_wire_removed`, `on_electric_network_created`, `on_electric_network_destroyed`, `on_electric_network_merged`, `on_electric_network_split`: (`pre_` electric events are also supported)
+    - `uint` player_index: The index of the player that caused the event.
+    - `uint` tick: Tick the event was generated.
+    - `?LuaEntity` source: The source entity of the wire connection. May not exist if the entity was destroyed.
+    - `defines.wire_connector_id` source_connector_id: The source connector of the wire connection.
+    - `?LuaEntity` destination: The destination entity of the wire connection. May not exist if the entity was destroyed.
+    - `defines.wire_connector_id` destination_connector_id: The destination connector of the wire connection.
+    - `defines.wire_type` wire_type: The wire type of the connection.
+
 Explicit support definitions (what events trigger what):
 `on_pre_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
 `on_circuit_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
@@ -28,10 +37,23 @@ Explicit support definitions (what events trigger what):
 `on_circuit_network_destroyed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
 `on_pre_circuit_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
 `on_circuit_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
-`on_pre_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_pre_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires. NOT FIRED WHEN POWERPOLES ARE SHIFT+CLICKED TO REMOVE WIRES
 `on_circuit_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
 
-A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
+`on_pre_electric_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_electric_wire_added` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_electric_wire_removed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_electric_wire_removed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_pre_electric_network_created` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_electric_network_created` supports the following: player placing wires on ghost and normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_electric_network_destroyed` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_electric_network_destroyed` supports the following: player removing wires from ghost and normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+`on_pre_electric_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_electric_network_merged` supports the following: player placing wires on normal entities, [platforms/robots/players/scripts(opt-in)/blueprint placement] building ghosts with ghost wires into entities that then create wires
+`on_pre_electric_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires. NOT FIRED WHEN POWERPOLES ARE SHIFT+CLICKED TO REMOVE WIRES
+`on_electric_network_split` supports the following: player removing wires from normal entities, [platforms/robots/players/scripts(opt-in)/environment/blueprint placement] destroying non-ghost entities with wires
+
+A note on the split/merge events: If an entity is built that connects/destroyed that splits two separate networks, i.e. a power pole in a string of power poles with electric or circuit network wires, the event will be fired once for every entity that connects to the entity that was changed. The source entity will be the entity of change, the destination will be the entity that changed.
 A note about scripts(opt-in): If a script does something silently (i.e. by not using raise_event inside the api call) this mod will not be capable of detecting it. If you need 100% precision, I recommend using a script trigger place event on the prototype definition instead!
 
 My mods are made 100% by humans, with no computer generated code or graphics.
