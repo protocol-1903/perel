@@ -16,6 +16,7 @@
 ---@field set_entity_connection_categories fun(name: string, categories: {[string]: true?}) Local override for categories. does not effect other mods
 ---@field get_possible_fluidbox_neighbours fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[] Returns the neighbours that might connect to the entity's fluidboxes. may return duplicate entries if an entity collides with multiple pipe connection targets
 ---@field get_possible_fluidbox_neighbours_by_fluidbox_and_connection fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[][] Returns the neighbours that might connect to the entity's fluidboxes, indexed by fluidbox and connection id. may return duplicate entries if an entity collides with multiple pipe connection targets
+---@field get_fluid fun(entity: LuaEntity, index?: uint): Fluid? Returns the fluid found in the entity's fluidbox, with the amount adjusted to what the fluid segment contains
 perel = perel or {}
 
 ---Returns any fluidbox connected neighbours. by default only includes normal connections
@@ -204,6 +205,20 @@ perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection = function(ent
     end
   end
   return neighbours
+end
+
+---Returns the fluid found in the entity's fluidbox, with the amount adjusted to what the fluid segment contains
+---@param entity LuaEntity
+---@param index? uint fluidbox index to check, defaults to 1
+---@return Fluid?
+perel.get_fluid = function (entity, index)
+  if entity.fluids_count < (index or 1) then return end
+  local fluid = entity.get_fluid(index or 1)
+  if not fluid then return end
+  if not entity.has_fluid_segment(index or 1) then return fluid end
+  local segment = entity.get_fluid_segment_fluid(index or 1)
+  fluid.amount = segment and segment.amount or fluid.amount
+  return fluid
 end
 
 return perel

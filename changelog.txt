@@ -5,6 +5,7 @@ Date: ????
     - Renamed perel.calculate_si to perel.parse_si
     - Decoupled helper scripts so they can be loaded independently
     - Fixed that get_possible_fluidbox_neighbours_by_fluidbox_and_connection had not been updated for 2.1
+    - Added perel.get_fluid()
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.2
 Date: 2026-08-25
