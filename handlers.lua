@@ -5,10 +5,56 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
+---@diagnostic disable-next-line: assign-type-mismatch
+---@class (partial) PEREL.storage
+storage = storage or {}
+
 assert(prototypes.item.coin, "ERROR: item 'coin' not found!")
 
+---@class (partial) PEREL
+---@field events PEREL.events
+---@field enabled_events PEREL.enabled_events
+---@field event_categories PEREL.event_categories
+---@field handlers {[string]: fun(event: EventData): boolean?}
 perel = perel or {}
 
+---@class PEREL.events
+---@field on_built defines.events[]
+---@field on_destroyed defines.events[]
+
+---@class PEREL.enabled_events
+---@field pre_circuit_wire_added boolean
+---@field circuit_wire_added boolean
+---@field pre_circuit_wire_removed boolean
+---@field circuit_wire_removed boolean
+---@field pre_circuit_network_created boolean
+---@field circuit_network_created boolean
+---@field pre_circuit_network_destroyed boolean
+---@field circuit_network_destroyed boolean
+---@field pre_circuit_network_merged boolean
+---@field circuit_network_merged boolean
+---@field pre_circuit_network_split boolean
+---@field circuit_network_split boolean
+---@field pre_electric_wire_added boolean
+---@field electric_wire_added boolean
+---@field pre_electric_wire_removed boolean
+---@field electric_wire_removed boolean
+---@field pre_electric_network_created boolean
+---@field electric_network_created boolean
+---@field pre_electric_network_destroyed boolean
+---@field electric_network_destroyed boolean
+---@field pre_electric_network_merged boolean
+---@field electric_network_merged boolean
+---@field pre_electric_network_split boolean
+---@field electric_network_split boolean
+
+---@class PEREL.event_categories
+---@field circuit_wire boolean
+---@field circuit_network boolean
+---@field electric_wire boolean
+---@field electric_network boolean
+
+---@diagnostic disable-next-line: missing-fields
 perel.events = {}
 perel.events.on_built = {
   defines.events.on_built_entity,
@@ -25,8 +71,10 @@ perel.events.on_destroyed = {
   defines.events.on_entity_died
 }
 
+---@diagnostic disable-next-line: missing-fields
 perel.event_handlers = {}
 
+---@diagnostic disable-next-line: missing-fields
 perel.enabled_events = {}
 
 -- index over all startup settings and note which events should be enabled
@@ -34,11 +82,13 @@ perel.enabled_events = {}
 local all_events = settings.startup["perel-enable-all-events"].value
 for name, setting in pairs(settings.startup) do
   if name:sub(1,6) == "perel_" and (all_events or setting.value) then
+    ---@diagnostic disable-next-line: inject-field
     perel.enabled_events[name:sub(7)] = true
   end
 end
 
 -- easy way to check if entire sections of runtime code are required
+---@diagnostic disable-next-line: missing-fields
 perel.event_categories = {}
 perel.event_categories.circuit_wire =
   perel.enabled_events.pre_circuit_wire_added or
@@ -71,6 +121,12 @@ perel.event_categories.electric_network =
 
 -- per-event special handlers ran before the event is sent
 perel.handlers = {}
+
+---@class (partial) PEREL
+---@field on_event fun(event: defines.events|defines.events[]|defines.events[][]|string, handler: fun(event: EventData))
+---@field on_init fun(handler: fun(event: ConfigurationChangedData?))
+---@field tock fun(): uint64, uint64, defines.target_type
+perel = perel or {}
 
 -- save event for later when registered
 perel.on_event = function(event, handler)
@@ -106,9 +162,10 @@ end)
 
 perel.tock = function()
   storage.grandfather.insert{name = "coin", health = 0.5}
-  local num = script.register_on_object_destroyed(storage.grandfather[1].item)
+  ---@diagnostic disable-next-line: param-type-mismatch
+  local num, num2, type = script.register_on_object_destroyed(storage.grandfather[1].item)
   storage.grandfather.clear()
-  return num
+  return num, num2, type
 end
 
 perel.remove_invalid = function(table)
@@ -151,6 +208,7 @@ perel.delayed_fire_event = function(event_name, event_data, skip_pre_fire_event)
 end
 
 -- generic post event subtick handler via deathrattles
+---@param event EventData.on_object_destroyed
 perel.on_event(defines.events.on_object_destroyed, function (event)
   local metadata = storage.event_deathrattles[event.registration_number]
   storage.event_deathrattles[event.registration_number] = nil
@@ -171,7 +229,7 @@ end)
 ---@param ghost LuaEntity
 ---@param table string
 ---@param tag any
----@param key? string optional key instead of appending
+---@param key? string|uint optional key instead of appending
 perel.insert_tag = function(ghost, table, tag, key)
   if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
   local tags = ghost.tags or {}

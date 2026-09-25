@@ -10,6 +10,14 @@ if not perel.event_categories.circuit_wire and
   not perel.event_categories.circuit_network and
   not perel.event_categories.electric_network then return end
 
+---@diagnostic disable-next-line: assign-type-mismatch
+---@class (partial) PEREL.storage
+---@field electric_wire_connection_target_cache {[string]: boolean}
+---@field circuit_wire_connection_target_cache {[string]: boolean}
+---@field electric_network_last_added {[PlayerIdentification]: {entity: LuaEntity, connector_id: defines.wire_connector_id}}
+---@field circuit_network_last_added {[PlayerIdentification]: {entity: LuaEntity, connector_id: defines.wire_connector_id}}
+storage = storage or {}
+
 perel.on_init(function()
   storage.electric_wire_connection_target_cache = { ["entity-ghost"] = false } -- dynamically generated, cleared when mods change/update
   storage.circuit_wire_connection_target_cache = { ["entity-ghost"] = false } -- dynamically generated, cleared when mods change/update
@@ -45,7 +53,7 @@ local function invalid_wall(entity)
     "south",
     "west"
   } do
-    local neighbour = entity.neighbours[direction]
+    local neighbour = entity.wall_neighbours[direction]
     if neighbour and (neighbour.type == "entity-ghost" and neighbour.ghost_type or neighbour.type) == "gate" then return false end
   end
   return true
@@ -77,6 +85,36 @@ local function get_wire_connector_id(entity, cursor_position, wire_type)
       ) or "circuit_"
     ) .. (wire_type == defines.wire_type.green and "green" or "red")
   ]
+end
+
+---Gets the wire connectors attached to this entity, and creates them if they don't exist
+---@param entity LuaEntity
+local function get_wire_connectors(entity)
+  local type = entity.type == "entity-ghost" and entity.ghost_type or entity.type
+  local connectors = {}
+  for _, wire_connector_id in pairs(
+    ---@diagnostic disable-next-line: param-type-mismatch
+    (type == "arithmetic-combinator" or type == "decider-combinator" or type == "selector-combinator") and {
+      defines.wire_connector_id.combinator_input_green,
+      defines.wire_connector_id.combinator_input_red,
+      defines.wire_connector_id.combinator_output_green,
+      defines.wire_connector_id.combinator_output_red
+    } or type == "electric-pole" and {
+      defines.wire_connector_id.pole_copper,
+      defines.wire_connector_id.circuit_green,
+      defines.wire_connector_id.circuit_red
+    } or type == "power-switch" and {
+      defines.wire_connector_id.power_switch_left_copper,
+      defines.wire_connector_id.power_switch_right_copper,
+      defines.wire_connector_id.circuit_green,
+      defines.wire_connector_id.circuit_red
+    } or {
+      defines.wire_connector_id.circuit_green,
+      defines.wire_connector_id.circuit_red
+    }
+  ) do
+    
+  end
 end
 
 local build_events = {
@@ -131,6 +169,7 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
     local electric = wire_type == defines.wire_type.copper
     local type = electric and "electric" or "circuit"
     local wires = electric and perel.event_categories.electric_wire or not electric and perel.event_categories.circuit_wire
+    ---@type AnyBasic?
     local network = (electric and perel.event_categories.electric_network or not electric and perel.event_categories.circuit_network) and 0 or nil
     if (electric and valid_electric or not electric and valid_circuit) and (wires or network) then
       local combined_event_data = network and {
@@ -245,6 +284,7 @@ perel.on_event("perel-build-shift", function (event)
     local electric = i == 1
     local type = electric and "electric" or "circuit"
     local wires = electric and perel.event_categories.electric_wire or not electric and perel.event_categories.circuit_wire
+    ---@type AnyBasic?
     local network = (electric and perel.event_categories.electric_network or not electric and perel.event_categories.circuit_network) and 0 or nil
     if wire_connector.connection_count ~= 0 and (electric and valid_electric or not electric and valid_circuit) and (wires or network) then
       local combined_event_data = network and {
@@ -409,16 +449,17 @@ perel.on_event("perel-build", function (event)
   if electric and not valid_electric or not electric and not valid_circuit then return end
   local type = electric and "electric" or "circuit"
 
+  ---@diagnostic disable-next-line: undefined-field
   local wire_source_data = storage[type .. "_network_last_added"][event.player_index] or {}
   local wire_source = wire_source_data.entity
 
   -- if the first entity selected (or previously invalid [or different surfaces]), save it and return early
   if not wire_source or not wire_source.valid or wire_source.surface_index ~= wire_destination.surface_index then
     perel.insert_tag(wire_destination, type .. "_network_last_added", true, event.player_index)
-    storage[
-      type .. "_network_last_added"][event.player_index] = {
-        entity = wire_destination,
-        connector_id = get_wire_connector_id(wire_destination, event.cursor_position, wire_types[player.cursor_stack.name])
+    ---@diagnostic disable-next-line: undefined-field
+    storage[type .. "_network_last_added"][event.player_index] = {
+      entity = wire_destination,
+      connector_id = get_wire_connector_id(wire_destination, event.cursor_position, wire_types[player.cursor_stack.name])
     }
     return
   end
@@ -497,10 +538,9 @@ perel.on_event("perel-build", function (event)
       storage[type .. "_network_last_added"][event.player_index] = nil
       perel.insert_tag(wire_destination, type .. "_network_last_added", nil, event.player_index)
     else
-      storage[
-        type .. "_network_last_added"][event.player_index] = {
-          entity = wire_destination,
-          connector_id = solo_event_data.destination_connector_id
+      storage[type .. "_network_last_added"][event.player_index] = {
+        entity = wire_destination,
+        connector_id = solo_event_data.destination_connector_id
       } -- add the tag to the destination
       perel.insert_tag(wire_destination, type .. "_network_last_added", true, event.player_index)
     end
