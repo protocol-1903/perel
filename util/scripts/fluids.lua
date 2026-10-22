@@ -5,6 +5,8 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
+require "general"
+
 ---@class (partial) PEREL
 ---@field get_fluidbox_neighoburs fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[] Returns any fluidbox connected neighbours. by default only includes normal connections
 ---@field get_fluidbox_neighoburs_by_fluidbox_and_connection fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[][] Returns any fluidbox connected neighbours, indexed by fluidbox and connection id. by default only includes normal connections
