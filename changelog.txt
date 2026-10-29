@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.3
-Date: ????
+Date: 2026-10-29
   Changes:
     - Renamed perel.calculate_si to perel.parse_si
     - Decoupled helper scripts so they can be loaded independently
