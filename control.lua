@@ -7,11 +7,10 @@
 
 require "handlers"
 
----@diagnostic disable-next-line: assign-type-mismatch
 ---@class (partial) PEREL.storage
 ---@field grandfather LuaInventory
 ---@field event_deathrattles {[uint64]: {event_name: string, event_data: EventData}}
-storage = storage or {}
+storage = (storage or {}) --[[@as PEREL.storage]]
 
 perel.on_init(function()
   storage.grandfather = storage.grandfather or game.create_inventory(1)

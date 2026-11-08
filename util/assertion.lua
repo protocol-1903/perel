@@ -5,18 +5,12 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
----@type PEREL
+---@class (partial) PEREL
+---@field assert fun(value: any?, e: string, ...): boolean -- Fancy assert variant
+---@field type_assert fun(value: any?, type: perel.value_type|perel.value_type[]?, e: string, ...): boolean -- Fancy assert variant, typed
+---@field soft_assert fun(value: any?, m: string?, ...): boolean -- Soft assert variant. Will log optional message if assert fails
+---@field soft_type_assert fun(value: any?, type: perel.value_type|perel.value_type[]?, m: string?, ...): boolean -- Soft assert variant, typed. Will log optional message if assert fails
 perel = perel or {}
-
----Fancy assert variant
----@param value any?
----@param e string error message
----@return boolean
-perel.assert = function (value, e, ...)
-  if value then return true end
-  error(... and e:format(...) or e or "ERROR: perel.assert failed", 2)
-  return false
-end
 
 ---@enum (key) perel.value_type
 local _value_type = {
@@ -68,6 +62,16 @@ local type_errors = {
   energy      = ". Expected energy, found %q",
   mapposition = ". Expected energy, found %q",
 }
+
+---Fancy assert variant
+---@param value any?
+---@param e string error message
+---@return boolean
+perel.assert = function (value, e, ...)
+  if value then return true end
+  error(... and e:format(...) or e or "ERROR: perel.assert failed", 2)
+  return false
+end
 
 ---Fancy assert variant, typed
 ---@param value any?
@@ -130,3 +134,5 @@ perel.soft_type_assert = function (value, type, m, ...)
   if m then error((... and m:format(...) or m) .. (type_errors[type] and type_errors[type]:format(value) or (". Expected %s, found %s"):format(type, _G.type(value))), 2) end
   return false
 end
+
+return perel

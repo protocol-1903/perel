@@ -5,6 +5,16 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
+---@class (partial) PEREL
+---@field special_handlers {[string]: fun(event: EventData): boolean?}
+---@field on_event fun(event: defines.events|defines.events[]|defines.events[][]|string|string[], handler: fun(event: EventData))
+---@field on_init fun(handler: fun(event: ConfigurationChangedData?))
+---@field tock fun(): uint64, uint64, defines.target_type -- Register an object then immediately destroy it, triggering a subtick event
+---@field remove_invalid fun(table: table<any, any>) -- Recursively removes invalid userdata objects
+---@field fire_event fun(event_name: string, event_data: EventData) -- Immediately fires event, if enabled
+---@field delayed_fire_event fun(event_name: string, event_data: EventData, skip_pre_fire_event: boolean?) -- Fires on_pre_ events and delays full event triggering, if enabled
+perel = perel or {}
+
 require "events"
 
 ---@diagnostic disable-next-line: assign-type-mismatch
@@ -12,14 +22,6 @@ require "events"
 storage = storage or {}
 
 assert(prototypes.item.coin, "ERROR: item 'coin' not found!")
-
---[[
----@class (partial) PEREL
----@field on_init fun(handler: fun(event: ConfigurationChangedData?))
----@field tock fun(): uint64, uint64, defines.target_type
-]]
----@type PEREL
-perel = perel or {}
 
 ---@type {[defines.events|string]: fun(e)[]}
 local event_handlers = {}
@@ -42,8 +44,8 @@ perel.on_event = function(event, handler)
   end
 end
 
--- same for init and config changed, merged for ease of use
 event_handlers.on_init = {}
+
 ---@param handler fun(event: ConfigurationChangedData?)
 perel.on_init = function(handler)
   event_handlers.on_init[#event_handlers.on_init+1] = handler
@@ -129,36 +131,4 @@ perel.on_event(defines.events.on_object_destroyed, function (event)
   end
 end)
 
----Appends the tag to the specified table
----@param ghost LuaEntity
----@param table string
----@param tag any
----@param key? string|uint optional key instead of appending
-perel.insert_tag = function(ghost, table, tag, key)
-  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
-  local tags = ghost.tags or {}
-  tags.perel = tags.perel or {}
-  tags.perel[table] = tags.perel[table] or {}
-  tags.perel[table][key or #tags.perel[table]+1] = tag
-  ghost.tags = tags
-end
-
----Sets the specified key to the tag
----@param ghost LuaEntity
----@param key string
----@param tag any
-perel.set_tag = function(ghost, key, tag)
-  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
-  local tags = ghost.tags or {}
-  tags.perel = tags.perel or {}
-  tags.perel[key] = tag
-  ghost.tags = tags
-end
-
----Gets a tag from the entity
----@param ghost LuaEntity
----@param key string
----@return any tag nil if not ghost or no tags
-perel.get_tag = function(ghost, key)
-  return ghost and ghost.valid and ghost.type == "entity-ghost" and ghost.tags and ghost.tags.perel and ghost.tags.perel[key] or nil
-end
+return perel

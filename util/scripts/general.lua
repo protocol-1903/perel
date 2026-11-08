@@ -5,7 +5,14 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
----@type PEREL
+---@class (partial) PEREL
+---@field find_build_action fun(actions: UndoRedoAction[], entity: LuaEntity): uint32? -- Returns the undo action associated with this entity
+---@field find_build_item fun(stack?: LuaUndoRedoStack, entity: LuaEntity): [uint32?, uint32?] -- Returns the undo item and action associated with this entity
+---@field get_side_length fun(prototype: LuaEntityPrototype): double -- Returns the longest edge of the bounding box, or the length of a side for a square entity
+---@field get_direction fun(a: MapPosition, b: MapPosition): defines.direction -- Returns the direction from a to b, assuming the two are in a straight line
+---@field insert_tag fun(ghost: LuaEntity, table: string, tag: any, key: string|uint?) -- Appends the tag to the specified subtable, optionally at the applied index
+---@field set_tag fun(ghost: LuaEntity, key: string, tag: any) -- Sets the specified key to the tag
+---@field get_tag fun(ghost: LuaEntity, key: string): any? -- Gets a tag from the entity
 perel = perel or {}
 
 ---Returns the undo action associated with this entity
@@ -56,3 +63,39 @@ perel.get_direction = function(a, b)
   ---@diagnostic disable-next-line: return-type-mismatch
   return math.abs(a.x - b.x) > math.abs(a.y - b.y) and (a.x < b.x and 4 or 12) or (a.y < b.y and 8 or 0)
 end
+
+---Appends the tag to the specified subtable, optionally at the applied index
+---@param ghost LuaEntity
+---@param table string
+---@param tag any
+---@param key? string|uint optional key instead of appending
+perel.insert_tag = function(ghost, table, tag, key)
+  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
+  local tags = ghost.tags or {}
+  tags.perel = tags.perel or {}
+  tags.perel[table] = tags.perel[table] or {}
+  tags.perel[table][key or #tags.perel[table]+1] = tag
+  ghost.tags = tags
+end
+
+---Sets the specified key to the tag
+---@param ghost LuaEntity
+---@param key string
+---@param tag any
+perel.set_tag = function(ghost, key, tag)
+  if not ghost or not ghost.valid or ghost.type ~= "entity-ghost" then return end
+  local tags = ghost.tags or {}
+  tags.perel = tags.perel or {}
+  tags.perel[key] = tag
+  ghost.tags = tags
+end
+
+---Gets a tag from the entity
+---@param ghost LuaEntity
+---@param key string
+---@return any tag nil if not ghost or no tags
+perel.get_tag = function(ghost, key)
+  return ghost and ghost.valid and ghost.type == "entity-ghost" and ghost.tags and ghost.tags.perel and ghost.tags.perel[key] or nil
+end
+
+return perel

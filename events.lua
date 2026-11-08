@@ -109,3 +109,5 @@ perel.event_categories = {
     perel.enabled_events.pre_electric_network_split or
     perel.enabled_events.electric_network_split,
 }
+
+return perel
