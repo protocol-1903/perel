@@ -102,6 +102,8 @@ perel.get_pipe_connection_bitmask = function(entity, include_undergrounds, inclu
   return mask
 end
 
+perel.mod_data = prototypes.mod_data.perel.data --[[@as PEREL.mod_data]]
+
 ---Stores all of the normal connection categories found on an entity as a boolean dictionary. Lazy loaded as required
 perel.entity_connection_categories = perel.mod_data.connection_category_overrides
 
