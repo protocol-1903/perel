@@ -25,6 +25,7 @@ perel.on_init(function()
   storage.circuit_network_last_added = storage.circuit_network_last_added or {}
 end)
 
+---@param entity string
 local function valid_electric_wire_target(entity)
   -- cache if wire connections are supported
   if storage.electric_wire_connection_target_cache[entity] == nil then
@@ -34,6 +35,7 @@ local function valid_electric_wire_target(entity)
   return storage.electric_wire_connection_target_cache[entity]
 end
 
+---@param entity string
 local function valid_circuit_wire_target(entity)
   -- cache if circuit wire connections are supported
   if storage.circuit_wire_connection_target_cache[entity] == nil then
@@ -164,7 +166,7 @@ perel.on_event({perel.events.on_built, perel.events.on_destroyed}, function (eve
   local combined_events = {} -- for each on_network_created/destroyed/merged/split
 
   -- for each wire node option
-  for wire_id, wire_connector in pairs(source_entity.get_wire_connectors() or {}) do
+  for wire_id, wire_connector in pairs(source_entity.get_wire_connectors(false) or {}) do
     local wire_type = wire_types[wire_id]
     local electric = wire_type == defines.wire_type.copper
     local type = electric and "electric" or "circuit"
@@ -280,7 +282,7 @@ perel.on_event("perel-build-shift", function (event)
     defines.wire_connector_id.circuit_green,
     defines.wire_connector_id.circuit_red
   } do
-    local wire_connector = entity.get_wire_connector(wire_id)
+    local wire_connector = entity.get_wire_connector(wire_id, false) --[[@as LuaWireConnector]]
     local electric = i == 1
     local type = electric and "electric" or "circuit"
     local wires = electric and perel.event_categories.electric_wire or not electric and perel.event_categories.circuit_wire
@@ -313,7 +315,7 @@ perel.on_event("perel-build-shift", function (event)
             source_connector_id = wire_id,
             destination = wire_connection.target.owner,
             destination_connector_id = wire_connection.target.wire_connector_id,
-            wire_type = wire_connection.wire_type,
+            wire_type = wire_connection.target.wire_type,
           }
           if network ~= nil then
             combined_event_data.destinations[#combined_event_data.destinations+1] = {
@@ -363,12 +365,12 @@ end)
 -- special handling for the edge case that the network is not split when a power pole is deconstructed
 ---@param event EventData.on_electric_network_split
 ---@return boolean
-perel.handlers.electric_network_split = function (event)
+perel.special_handlers.electric_network_split = function (event)
   local network
   for _, destination in pairs(event.destinations) do
     local e = destination.entity
     if e and e.valid then
-      local wire_connector = e.get_wire_connector(destination.connector_id)
+      local wire_connector = e.get_wire_connector(destination.connector_id, false) --[[@as LuaWireConnector]]
       if network and network ~= wire_connector.network_id then
         return true -- networks split, fire event
       end
@@ -381,12 +383,12 @@ end
 -- special handling for the edge case that the network is not split when a power pole is deconstructed
 ---@param event EventData.on_circuit_network_split
 ---@return boolean
-perel.handlers.circuit_network_split = function (event)
+perel.special_handlers.circuit_network_split = function (event)
   local network
   for _, destination in pairs(event.destinations) do
     local e = destination.entity
     if e and e.valid then
-      local wire_connector = e.get_wire_connector(destination.connector_id)
+      local wire_connector = e.get_wire_connector(destination.connector_id, false) --[[@as LuaWireConnector]]
       if network and network ~= wire_connector.network_id then
         return true -- networks split, fire event
       end
@@ -496,8 +498,8 @@ perel.on_event("perel-build", function (event)
       wire_type = wire_type,
     }
 
-    local source_connector = wire_source.get_wire_connector(solo_event_data.source_connector_id, true)
-    local destination_connector = wire_destination.get_wire_connector(solo_event_data.destination_connector_id, true)
+    local source_connector = wire_source.get_wire_connector(solo_event_data.source_connector_id, true) --[[@as LuaWireConnector]]
+    local destination_connector = wire_destination.get_wire_connector(solo_event_data.destination_connector_id, true) --[[@as LuaWireConnector]]
 
     local removed = source_connector.is_connected_to(destination_connector)
     local network = (electric and perel.event_categories.electric_network or not electric and perel.event_categories.circuit_network) and 0 or nil
@@ -526,11 +528,11 @@ perel.on_event("perel-build", function (event)
 
       -- raise events, only fire combined event if destinations exist
       if combined then
-        perel.delayed_fire_event(type .. combined, combined_event_data)
+        perel.delayed_fire_event(type .. combined, combined_event_data --[[@as EventData]])
       end
     end
 
-    perel.delayed_fire_event(type .. (removed and "_wire_removed" or "_wire_added"), solo_event_data)
+    perel.delayed_fire_event(type .. (removed and "_wire_removed" or "_wire_added"), solo_event_data --[[@as EventData]])
 
     -- remove the tag on the source entity
     perel.insert_tag(wire_source, type .. "_network_last_added", nil, event.player_index)

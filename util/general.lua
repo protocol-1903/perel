@@ -5,10 +5,7 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
----@class (partial) PEREL
----@field calculate_power fun(power: number): data.Energy Parses a number into Watts. May lose precision of lower digits
----@field parse_power fun(power: data.Energy): number Parses Joules or Watts into a number
----@field parse_si fun(number: number): string Parses the SI representation of a number
+---@type PEREL
 perel = perel or {}
 
 local mult_lookup = {

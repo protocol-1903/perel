@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.4
+Date: ????
+  Changes:
+    - Added perel global in data stage
+    - Added perel mod-data object
+    - Added perel.mod_data to access the mod-data object
+    - Added perel.mod_data.connection_category_overrides {[string]: {[string]: true?}} to override connection categories of entities so the changes are shared between all mods using perel utils
+    - Removed perel.set_connection_categories(). Use perel.mod_data.connection_category_overrides instead
+    - Added perel.value_type enum, perel.assert(v, e, ...), perel.type_assert(v, t|t[], e, ...), perel.soft_assert(v, m?, ...), and perel.soft_type_assert(v, t|t[], m?, ...). See util/assertion.lua for details
+---------------------------------------------------------------------------------------------------
 Version: 1.2.3
 Date: 2026-10-29
   Changes:

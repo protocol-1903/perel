@@ -5,11 +5,7 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
----@class (partial) PEREL
----@field find_build_action fun(actions: UndoRedoAction[], entity: LuaEntity): uint32? Returns the undo action associated with this entity
----@field find_build_item fun(stack?: LuaUndoRedoStack, entity: LuaEntity): [uint32?, uint32?] Returns the undo item and action associated with this entity
----@field get_side_length fun(prototype: LuaEntityPrototype): double Returns the longest edge of the bounding box, or the length of a side for a square entity
----@field get_direction fun(a: MapPosition, b: MapPosition): defines.direction Returns the direction from a to b, assuming the two are in a straight line
+---@type PEREL
 perel = perel or {}
 
 ---Returns the undo action associated with this entity

@@ -5,6 +5,8 @@
 -- See LICENSE for complete terms.
 -- ============================================================================
 
+require "mod-data"
+
 -- utility prototypes
 data:extend{
   {

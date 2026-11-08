@@ -7,18 +7,7 @@
 
 require "general"
 
----@class (partial) PEREL
----@field get_fluidbox_neighoburs fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[] Returns any fluidbox connected neighbours. by default only includes normal connections
----@field get_fluidbox_neighoburs_by_fluidbox_and_connection fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): LuaEntity[][] Returns any fluidbox connected neighbours, indexed by fluidbox and connection id. by default only includes normal connections
----@field get_fluidbox_targets fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): PipeConnection[] Returns any fluidbox targets. by default only includes normal connections
----@field get_fluidbox_targets_by_fluidbox_and_connection fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): PipeConnection[][] Returns any fluidbox targets, indexed by fluidbox and connection id. by default only includes normal connections
----@field get_pipe_connection_bitmask fun(entity: LuaEntity, include_underground?: boolean, include_linked?: boolean): uint Returns the bitmask that represents the fluid connections of this entity. only includes connections that are valid and in use. may return nonsensical values when used on entities that do not have pipe-like connections
----@field entity_connection_categories {[string]: {[string]: true}} Stores all of the normal connection categories found on an entity as a boolean dictionary. Lazy loaded as required
----@field get_entity_connection_categories fun(entity: LuaEntityPrototype): {[string]: true?} Returns the connection category dictionary for an entity, and creates it if it don't already exist
----@field set_entity_connection_categories fun(name: string, categories: {[string]: true?}) Local override for categories. does not effect other mods
----@field get_possible_fluidbox_neighbours fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[] Returns the neighbours that might connect to the entity's fluidboxes. may return duplicate entries if an entity collides with multiple pipe connection targets
----@field get_possible_fluidbox_neighbours_by_fluidbox_and_connection fun(entity: LuaEntity, categories?: {[string]: true?}): LuaEntity[][] Returns the neighbours that might connect to the entity's fluidboxes, indexed by fluidbox and connection id. may return duplicate entries if an entity collides with multiple pipe connection targets
----@field get_fluid fun(entity: LuaEntity, index?: uint): Fluid? Returns the fluid found in the entity's fluidbox, with the amount adjusted to what the fluid segment contains
+---@type PEREL
 perel = perel or {}
 
 ---Returns any fluidbox connected neighbours. by default only includes normal connections
@@ -114,7 +103,7 @@ perel.get_pipe_connection_bitmask = function(entity, include_undergrounds, inclu
 end
 
 ---Stores all of the normal connection categories found on an entity as a boolean dictionary. Lazy loaded as required
-perel.entity_connection_categories = {}
+perel.entity_connection_categories = perel.mod_data.connection_category_overrides
 
 ---Returns the connection category dictionary for an entity, and creates it if it don't already exist
 ---@param prototype LuaEntityPrototype
@@ -132,13 +121,6 @@ perel.get_entity_connection_categories = function(prototype)
     end
   end
   return perel.entity_connection_categories[prototype.name]
-end
-
----Local override for categories. does not effect other mods
----@param name string
----@param categories {[string]: true?}
-perel.set_entity_connection_categories = function(name, categories)
-  perel.entity_connection_categories[name] = categories
 end
 
 ---Returns the neighbours that might connect to the entity's fluidboxes. may return duplicate entries if an entity collides with multiple pipe connection targets
