@@ -8,6 +8,8 @@ Date: ????
     - Added perel.mod_data.connection_category_overrides {[string]: {[string]: true?}} to override connection categories of entities so the changes are shared between all mods using perel utils
     - Removed perel.set_connection_categories(). Use perel.mod_data.connection_category_overrides instead
     - Added perel.value_type enum, perel.assert(v, e, ...), perel.type_assert(v, t|t[], e, ...), perel.soft_assert(v, m?, ...), and perel.soft_type_assert(v, t|t[], m?, ...). See util/assertion.lua for details
+  Bugfixes:
+    - Fixed perel.get_possible_fluidbox_neighbours_by_fluidbox_and_connection() return annotations
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.3
 Date: 2026-10-29
