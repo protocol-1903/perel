@@ -7,7 +7,10 @@
 
 ---@class (partial) PEREL
 ---@field mod_data PEREL.mod_data
+---@field postprocess table<string, fun()>
 perel = perel or {}
+
+perel.postprocess = perel.postprocess or {}
 
 local mod_data = (data.raw["mod-data"] or {}).perel or {
   type = "mod-data",
